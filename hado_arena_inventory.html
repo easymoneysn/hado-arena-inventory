@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하도 아레나 — 장비 재고 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--bg2:#11141c;--bg3:#181d28;--bg4:#1f2535;--bg5:#273044;
+  --border:rgba(255,255,255,0.055);--border2:rgba(255,255,255,0.10);--border3:rgba(255,255,255,0.16);
+  --text:#dde2ef;--text2:#7a83a0;--text3:#424d66;
+  --accent:#4b8cf0;--accent2:#3570d4;
+  --green:#2ec47e;--yellow:#e8b930;--red:#de4848;
+  --sg:#a85ef5;--ag:#2ec47e;--bg-g:#4b8cf0;--cg:#e8b930;
+  --r:10px;--rl:14px;
+}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+
+/* ─── HEADER ─────────────────────── */
+.hdr{
+  height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  padding:0 1.5rem;position:relative;z-index:100;flex-shrink:0
+}
+.hdr-badge{background:var(--accent);color:#fff;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.07em;padding:3px 8px;border-radius:5px;flex-shrink:0}
+.hdr-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
+/* breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-left:4px}
+.breadcrumb .bc-sep{opacity:.4}
+.breadcrumb .bc-link{cursor:pointer;color:var(--text2);transition:color .12s}
+.breadcrumb .bc-link:hover{color:var(--accent)}
+.breadcrumb .bc-cur{color:var(--text);font-weight:600}
+.hdr-sp{flex:1}
+.hdr-actions{display:flex;align-items:center;gap:8px}
+
+/* ─── BTN ─────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .14s;border:1px solid var(--border2);background:var(--bg3);color:var(--text);white-space:nowrap}
+.btn:hover{background:var(--bg4);border-color:var(--border3)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent2)}
+.btn svg{width:12px;height:12px;flex-shrink:0}
+.btn.sm{padding:4px 9px;font-size:11px}
+.btn.xs{padding:3px 7px;font-size:10px}
+
+/* ─── APP ─────────────────────────── */
+.app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+
+/* ─── SIDEBAR ─────────────────────── */
+.sidebar{
+  width:210px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden
+}
+.sb-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.sb-srch{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:0 9px;height:28px}
+.sb-srch svg{color:var(--text3);width:11px;height:11px;flex-shrink:0}
+.sb-srch input{background:none;border:none;outline:none;font-size:11px;color:var(--text);font-family:inherit;width:100%}
+.sb-srch input::placeholder{color:var(--text3)}
+.sb-list{flex:1;overflow-y:auto;padding:6px 0}
+/* all */
+.sb-all{display:flex;align-items:center;gap:7px;padding:6px 12px;cursor:pointer;transition:background .12s;font-size:12px;color:var(--text2);font-weight:600}
+.sb-all:hover{background:var(--bg3)}
+.sb-all.active{background:var(--bg4);color:var(--text)}
+/* nav */
+.nav-cat{user-select:none}
+.nav-cat-hdr{display:flex;align-items:center;gap:7px;padding:6px 12px;transition:background .12s;cursor:pointer}
+.nav-cat-hdr:hover{background:var(--bg3)}
+.nav-cat-hdr.active{background:var(--bg4)}
+.nc-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.nc-name{font-size:11px;font-weight:600;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc-dmg{font-size:9px;color:var(--red);font-weight:700;background:rgba(222,72,72,.12);border-radius:3px;padding:1px 4px;flex-shrink:0}
+.nc-chev{color:var(--text3);width:11px;height:11px;transition:transform .15s;flex-shrink:0}
+.nav-cat.closed .nc-chev{transform:rotate(-90deg)}
+.nav-subs{padding-left:6px}
+.nav-cat.closed .nav-subs{display:none}
+.nav-sub{display:flex;align-items:center;gap:6px;padding:4px 12px 4px 18px;cursor:pointer;transition:background .12s}
+.nav-sub:hover{background:var(--bg3)}
+.nav-sub.active{background:var(--bg4)}
+.ns-dot{width:4px;height:4px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.ns-dot.active{background:var(--accent)}
+.ns-name{font-size:11px;color:var(--text3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ns-cnt{font-size:9px;color:var(--text3);font-family:'Space Mono',monospace}
+.sb-footer{padding:8px 10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.sb-add{width:100%;padding:6px;background:transparent;border:1px dashed var(--border2);border-radius:7px;color:var(--text3);font-size:10px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .12s}
+.sb-add:hover{background:var(--bg3);color:var(--text2);border-color:var(--accent)}
+
+/* ─── MAIN ─────────────────────────── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+/* ─── VIEW CONTAINER ─────────────────── */
+.view{position:absolute;inset:0;display:flex;flex-direction:column;transition:opacity .2s,transform .2s}
+.view.hidden{opacity:0;pointer-events:none;transform:translateX(12px)}
+
+/* ─── DASHBOARD (view-home) ─────────── */
+.dash-scroll{flex:1;overflow-y:auto;padding:16px 18px}
+.dash-section{margin-bottom:22px}
+.dash-sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.dash-sec-icon{font-size:16px}
+.dash-sec-name{font-size:13px;font-weight:700}
+.dash-sec-cnt{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px}
+.dash-sec-dmg{font-family:'Space Mono',monospace;font-size:11px;color:var(--red);background:rgba(222,72,72,.1);border:1px solid rgba(222,72,72,.18);border-radius:4px;padding:2px 7px}
+
+/* Summary row cards per category */
+.dash-rows{display:flex;flex-direction:column;gap:6px}
+.dash-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:11px 14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden
+}
+.dash-row:hover{background:var(--bg3);border-color:var(--border2);transform:translateX(2px)}
+.dash-row.has-dmg{border-left:3px solid var(--red)}
+.dash-row.has-dmg{padding-left:12px}
+.dr-thumb{
+  width:44px;height:44px;border-radius:8px;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;overflow:hidden;border:1px solid var(--border)
+}
+.dr-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.dr-info{flex:1;min-width:0}
+.dr-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dr-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dr-loc{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:3px}
+.dr-loc svg{width:8px;height:8px}
+.dr-note{font-size:10px;color:var(--text3)}
+.dr-grades{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.gb{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;padding:3px 6px;border-radius:4px;white-space:nowrap}
+.gS{background:rgba(168,94,245,.13);color:var(--sg);border:1px solid rgba(168,94,245,.2)}
+.gA{background:rgba(46,196,126,.10);color:var(--ag);border:1px solid rgba(46,196,126,.18)}
+.gB{background:rgba(75,140,240,.10);color:var(--bg-g);border:1px solid rgba(75,140,240,.18)}
+.gC{background:rgba(232,185,48,.10);color:var(--cg);border:1px solid rgba(232,185,48,.18)}
+.gD{background:rgba(222,72,72,.12);color:var(--red);border:1px solid rgba(222,72,72,.22)}
+.dr-total{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--text);flex-shrink:0;text-align:right;min-width:48px}
+.dr-total-lbl{font-size:9px;color:var(--text3);text-align:right;margin-top:1px}
+.dr-status{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.st-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.st-ok{background:rgba(46,196,126,.1);color:var(--green);border:1px solid rgba(46,196,126,.2)}
+.st-warn{background:rgba(232,185,48,.1);color:var(--yellow);border:1px solid rgba(232,185,48,.2)}
+.st-dmg{background:rgba(222,72,72,.12);color:var(--red);border:1px solid rgba(222,72,72,.25)}
+.st-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.dr-chevron{color:var(--text3);width:14px;height:14px;flex-shrink:0;opacity:.5}
+.dr-row-hint{font-size:10px;color:var(--text3)}
+
+/* Total bar */
+.dash-total-bar{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 18px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0
+}
+.dtb-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.dtb-val{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;line-height:1}
+.dtb-lbl{font-size:10px;color:var(--text3);white-space:nowrap}
+.dtb-sep{width:1px;height:28px;background:var(--border);flex-shrink:0}
+
+/* ─── DETAIL VIEW ─────────────────────── */
+.det-head{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0
+}
+.det-img{
+  width:72px;height:72px;border-radius:10px;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;flex-shrink:0;overflow:hidden;border:1px solid var(--border)
+}
+.det-img img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.det-titles{flex:1;min-width:0}
+.det-name{font-size:17px;font-weight:800;line-height:1.2;margin-bottom:5px}
+.det-path{font-size:11px;color:var(--text3);margin-bottom:8px}
+.det-tags{display:flex;gap:6px;flex-wrap:wrap}
+.det-tag{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:3px 8px}
+.det-tag svg{width:10px;height:10px;flex-shrink:0}
+.det-actions{display:flex;gap:6px;flex-shrink:0;align-items:flex-start}
+
+.det-scroll{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.det-sec{}
+.det-sec-t{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+
+/* Grade bars in detail */
+.grade-bars{display:flex;flex-direction:column;gap:6px}
+.grade-bar-row{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
+.gb-lbl{min-width:100px;display:flex;align-items:center;gap:6px}
+.gb-lbl-txt{font-size:12px;font-weight:600;color:var(--text2)}
+.gb-sp{flex:1}
+.qc{display:flex;align-items:center;gap:9px}
+.qbtn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--bg4);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .12s;font-family:inherit;line-height:1}
+.qbtn:hover{background:var(--bg5);color:var(--text);border-color:var(--accent)}
+.qnum{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--text);min-width:30px;text-align:center}
+
+/* Fields in detail */
+.det-field-row{display:flex;gap:10px}
+.det-field{flex:1;display:flex;flex-direction:column;gap:5px}
+.det-field-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.det-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:8px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;transition:border-color .14s}
+.det-input:focus{border-color:var(--accent)}
+.det-input::placeholder{color:var(--text3)}
+
+/* Image zone in detail */
+.det-img-zone{
+  border:1.5px dashed var(--border2);border-radius:9px;
+  background:var(--bg3);display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:6px;min-height:100px;cursor:pointer;
+  transition:all .14s;position:relative;overflow:hidden
+}
+.det-img-zone:hover{border-color:var(--accent);background:var(--bg4)}
+.det-img-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.det-img-zone img{width:100%;max-height:180px;object-fit:cover;border-radius:8px;display:block}
+.det-img-zone .iz-lbl{font-size:11px;color:var(--text3)}
+.drive-hint{font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5}
+.drive-row{display:flex;gap:7px;align-items:center}
+.drive-row .det-input{flex:1}
+
+.det-save-bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+.det-save-bar .btn{flex:1;justify-content:center}
+
+/* ─── EMPTY ─────────────────────────── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--text3);font-size:13px}
+
+/* ─── MODALS ─────────────────────────── */
+.mw{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.mw.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.35rem;width:100%;max-width:500px;transform:translateY(12px);transition:transform .2s;max-height:90vh;overflow-y:auto}
+.mw.open .modal{transform:translateY(0)}
+.m-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.m-title{font-size:14px;font-weight:700}
+.mc{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg4);cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.mc:hover{background:var(--bg3);color:var(--text)}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.fi,.fs{background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;transition:border-color .14s;width:100%}
+.fi:focus,.fs:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--text3)}
+.fs option{background:var(--bg2)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.fg2 .fg{margin-bottom:0}
+.m-foot{display:flex;gap:7px;justify-content:flex-end;margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.grade-inp-row{display:flex;gap:5px;margin-bottom:10px}
+.gi-g{flex:1;display:flex;flex-direction:column;gap:4px;align-items:center;min-width:0}
+.gi-lbl{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;text-align:center;white-space:nowrap;overflow:hidden;max-width:100%}
+.gi-f{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;font-weight:700;text-align:center;outline:none;transition:border-color .14s}
+.gi-f:focus{border-color:var(--accent)}
+
+/* Grade settings */
+.grade-settings{display:flex;flex-direction:column;gap:5px}
+.gsr{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px}
+.gsr-sw{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gsr-inp{background:transparent;border:none;border-bottom:1px solid var(--border2);outline:none;font-size:12px;font-weight:600;color:var(--text);font-family:inherit;flex:1;padding:1px 3px;transition:border-color .12s}
+.gsr-inp:focus{border-bottom-color:var(--accent)}
+.gsr-del{width:20px;height:20px;border-radius:4px;border:1px solid rgba(222,72,72,.3);background:none;color:rgba(222,72,72,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;flex-shrink:0}
+.gsr-del:hover{background:rgba(222,72,72,.15);color:var(--red)}
+.gs-add{width:100%;padding:7px;border:1px dashed var(--border2);border-radius:6px;background:none;color:var(--text3);font-size:11px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;margin-top:4px}
+.gs-add:hover{background:var(--bg3);color:var(--text2);border-color:var(--accent)}
+
+/* Confirm */
+.cw{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s}
+.cw.open{opacity:1;pointer-events:all}
+.cb{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:1.25rem;max-width:300px;width:90%}
+.ct{font-size:13px;font-weight:700;margin-bottom:6px}
+.cd{font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.5}
+.ca{display:flex;gap:7px;justify-content:flex-end}
+.btn-del{background:var(--red);border-color:var(--red);color:#fff}
+.btn-del:hover{background:#b83030}
+
+/* Toast */
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text);z-index:900;display:flex;align-items:center;gap:7px;transform:translateY(10px);opacity:0;pointer-events:none;transition:all .2s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(46,196,126,.3)}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+
+@media(max-width:680px){
+  .sidebar{width:170px}
+  .fg2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <span class="hdr-badge">HADO</span>
+  <span class="hdr-title">아레나 장비 재고 관리</span>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div class="hdr-sp"></div>
+  <div class="hdr-actions">
+    <button class="btn sm" onclick="openSettings()">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="2.5"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M11.1 2.9l-1.1 1.1M4 10l-1.1 1.1"/></svg>
+      등급 설정
+    </button>
+    <div class="btn sm" id="dmgChip" onclick="toggleDmgFilter()" style="color:var(--red);border-color:rgba(222,72,72,.25);background:rgba(222,72,72,.08);cursor:pointer">
+      ⚠ 파손 <span style="font-family:'Space Mono',monospace;font-weight:700" id="dmgCount">0</span>
+    </div>
+  </div>
+</header>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-lbl">분류</div>
+      <div class="sb-srch">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+        <input type="text" placeholder="검색..." id="srchInput" oninput="doSearch()">
+      </div>
+    </div>
+    <div class="sb-list" id="sbList"></div>
+    <div class="sb-footer">
+      <button class="sb-add" onclick="openAddCatModal()">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+        분류 추가
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- VIEW: DASHBOARD -->
+    <div class="view" id="viewDash">
+      <!-- total bar -->
+      <div class="dash-total-bar" id="dashTotalBar"></div>
+      <!-- content -->
+      <div class="dash-scroll" id="dashScroll"></div>
+    </div>
+
+    <!-- VIEW: DETAIL -->
+    <div class="view hidden" id="viewDet">
+      <div class="det-head" id="detHead"></div>
+      <div class="det-scroll" id="detScroll"></div>
+      <div class="det-save-bar">
+        <button class="btn" onclick="goHome()">← 목록으로</button>
+        <button class="btn pri" onclick="saveDetail()">변경 저장</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="mw" id="itemMW">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-title" id="mTitle">아이템 추가</div>
+      <button class="mc" onclick="closeMW('itemMW')">×</button>
+    </div>
+    <div class="fg2">
+      <div class="fg"><div class="fl">대분류 *</div><select class="fs" id="fCat" onchange="onFCat()"><option value="">선택</option></select></div>
+      <div class="fg"><div class="fl">중분류 *</div><select class="fs" id="fSub" onchange="onFSub()"><option value="">선택</option></select></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><div class="fl">소분류</div><select class="fs" id="fLeaf"><option value="">없음</option></select></div>
+      <div class="fg"><div class="fl">새 소분류 입력</div><input class="fi" id="fNL" placeholder="직접 입력"></div>
+    </div>
+    <div class="fg"><div class="fl">장비명 *</div><input class="fi" id="fNm" placeholder="예: HDMI 케이블 20m"></div>
+    <div class="fg2">
+      <div class="fg"><div class="fl">위치</div><input class="fi" id="fLoc" placeholder="예: 창고 선반 A-2"></div>
+      <div class="fg"><div class="fl">메모</div><input class="fi" id="fNote" placeholder="스펙, 특이사항 등"></div>
+    </div>
+    <div class="fg"><div class="fl">구글 드라이브 링크</div><input class="fi" id="fDrive" placeholder="https://drive.google.com/file/d/..."></div>
+    <div class="fl" style="margin-bottom:7px">등급별 수량</div>
+    <div class="grade-inp-row" id="mGradeInputs"></div>
+    <div class="m-foot">
+      <button class="btn" onclick="closeMW('itemMW')">취소</button>
+      <button class="btn pri" onclick="saveItem()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAT MODAL -->
+<div class="mw" id="catMW">
+  <div class="modal" style="max-width:370px">
+    <div class="m-hdr"><div class="m-title">분류 추가</div><button class="mc" onclick="closeMW('catMW')">×</button></div>
+    <div class="fg"><div class="fl">종류</div><select class="fs" id="cType" onchange="onCType()"><option value="major">대분류</option><option value="sub">중분류</option><option value="leaf">소분류</option></select></div>
+    <div class="fg" id="cPG" style="display:none"><div class="fl">상위 대분류</div><select class="fs" id="cPar" onchange="onCPar()"></select></div>
+    <div class="fg" id="cGG" style="display:none"><div class="fl">상위 중분류</div><select class="fs" id="cGrand"></select></div>
+    <div class="fg"><div class="fl">분류명 *</div><input class="fi" id="cNm" placeholder="분류명"></div>
+    <div class="fg" id="cIG"><div class="fl">아이콘 이모지</div><input class="fi" id="cIco" placeholder="📦" style="font-size:18px;text-align:center;max-width:80px"></div>
+    <div class="m-foot"><button class="btn" onclick="closeMW('catMW')">취소</button><button class="btn pri" onclick="saveCat()">추가</button></div>
+  </div>
+</div>
+
+<!-- GRADE SETTINGS -->
+<div class="mw" id="settingsMW">
+  <div class="modal" style="max-width:350px">
+    <div class="m-hdr"><div class="m-title">등급 설정</div><button class="mc" onclick="closeMW('settingsMW')">×</button></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">이름 변경·추가·삭제 가능. 파손 등급(마지막)은 삭제 불가.</div>
+    <div class="grade-settings" id="gsBody"></div>
+    <button class="gs-add" onclick="addGradeRow()">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+      등급 추가
+    </button>
+    <div class="m-foot"><button class="btn" onclick="closeMW('settingsMW')">닫기</button><button class="btn pri" onclick="saveGradeNames()">저장</button></div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="cw" id="confW">
+  <div class="cb">
+    <div class="ct" id="confT">삭제 확인</div>
+    <div class="cd" id="confD">삭제하시겠습니까?</div>
+    <div class="ca"><button class="btn" onclick="closeConf()">취소</button><button class="btn btn-del" onclick="doConf()">삭제</button></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  GRADES
+// ═══════════════════════════════════════════
+let GRADES=[
+  {key:'S',name:'S급 (미개봉)',cls:'gS'},
+  {key:'A',name:'A급',cls:'gA'},
+  {key:'B',name:'B급',cls:'gB'},
+  {key:'C',name:'C급',cls:'gC'},
+  {key:'D',name:'파손',cls:'gD'},
+];
+const SWATCH=['#a85ef5','#2ec47e','#4b8cf0','#e8b930','#de4848','#ff8c42','#00c4cc','#ff6b9d'];
+function gradeColor(i){return SWATCH[i%SWATCH.length];}
+
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+let DB={
+  cats:[
+    {id:'c1',name:'인터넷 연결',icon:'🌐',subs:[
+      {id:'s1',name:'LAN 케이블',leaves:[{id:'l1',name:'CAT.6'},{id:'l2',name:'CAT.7'},{id:'l3',name:'패치 케이블'}]},
+      {id:'s2',name:'공유기 / 허브',leaves:[]},
+    ]},
+    {id:'c2',name:'TV 및 방송 송출',icon:'📺',subs:[
+      {id:'s3',name:'HDMI 케이블',leaves:[{id:'l4',name:'5m'},{id:'l5',name:'10m'},{id:'l6',name:'20m'}]},
+      {id:'s4',name:'캡쳐보드',leaves:[]},
+      {id:'s5',name:'영상 분배기',leaves:[]},
+    ]},
+    {id:'c3',name:'소모 용품',icon:'📦',subs:[
+      {id:'s6',name:'테이프',leaves:[{id:'l7',name:'덕트 테이프'},{id:'l8',name:'케이블 테이프'}]},
+      {id:'s7',name:'케이블 타이',leaves:[{id:'l9',name:'소형'},{id:'l10',name:'대형'}]},
+      {id:'s8',name:'기타 소모품',leaves:[]},
+    ]},
+    {id:'c4',name:'기타 필요 용품',icon:'🔧',subs:[
+      {id:'s9',name:'전원 용품',leaves:[{id:'l11',name:'멀티탭'},{id:'l12',name:'어댑터'}]},
+      {id:'s10',name:'공구 / 기타',leaves:[]},
+    ]},
+  ],
+  items:[
+    {id:'i1',cId:'c1',sId:'s1',lId:'l1',name:'LAN CAT.6 1m',note:'패치용',loc:'창고 선반 A-1',driveUrl:'',S:10,A:8,B:3,C:0,D:2},
+    {id:'i2',cId:'c1',sId:'s1',lId:'l2',name:'LAN CAT.7 3m',note:'',loc:'창고 선반 A-1',driveUrl:'',S:5,A:4,B:1,C:0,D:0},
+    {id:'i3',cId:'c2',sId:'s3',lId:'l5',name:'HDMI 10m',note:'4K@60Hz',loc:'무대 창고',driveUrl:'',S:0,A:4,B:2,C:1,D:1},
+    {id:'i4',cId:'c2',sId:'s3',lId:'l6',name:'HDMI 20m',note:'4K 지원',loc:'무대 창고',driveUrl:'',S:2,A:3,B:1,C:0,D:0},
+    {id:'i5',cId:'c2',sId:'s4',lId:null,name:'Elgato 4K60 Pro',note:'PCIe 슬롯형',loc:'서버실 선반 B',driveUrl:'',S:1,A:2,B:0,C:0,D:0},
+    {id:'i6',cId:'c3',sId:'s6',lId:'l7',name:'덕트 테이프 (흑)',note:'바닥 고정용',loc:'소모품 박스',driveUrl:'',S:20,A:0,B:0,C:0,D:0},
+    {id:'i7',cId:'c3',sId:'s7',lId:'l9',name:'케이블 타이 소형',note:'',loc:'소모품 박스',driveUrl:'',S:50,A:0,B:0,C:0,D:0},
+  ]
+};
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let selCatId=null,selSubId=null,detItemId=null,editModalId=null;
+let searchQ='',dmgFilter=false,curView='dash'; // 'dash' | 'det'
+let detDriveVal=null;
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function catIcon(cId){const c=DB.cats.find(x=>x.id===cId);return c?c.icon:'📦';}
+function catPath(item){
+  const c=DB.cats.find(x=>x.id===item.cId);
+  const s=c?.subs.find(x=>x.id===item.sId);
+  const l=s?.leaves.find(x=>x.id===item.lId);
+  return [c?.name,s?.name,l?.name].filter(Boolean).join(' › ');
+}
+function driveThumb(url){
+  if(!url) return null;
+  let id=null;
+  let m=url.match(/\/file\/d\/([^/?#]+)/);
+  if(m) id=m[1];
+  if(!id){m=url.match(/[?&]id=([^&]+)/);if(m)id=m[1];}
+  if(!id) return null;
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
+}
+function itemTotal(item){return GRADES.filter(g=>g.key!=='D').reduce((s,g)=>s+(item[g.key]||0),0);}
+function openMW(id){document.getElementById(id).classList.add('open');}
+function closeMW(id){document.getElementById(id).classList.remove('open');}
+let tT;
+function toast(msg,ok=true){
+  const el=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  el.className='toast show'+(ok?' ok':'');
+  clearTimeout(tT);tT=setTimeout(()=>el.classList.remove('show'),2400);
+}
+function filteredItems(){
+  let items=DB.items;
+  if(dmgFilter) items=items.filter(i=>(i.D||0)>0);
+  else if(selSubId) items=items.filter(i=>i.cId===selCatId&&i.sId===selSubId);
+  else if(selCatId) items=items.filter(i=>i.cId===selCatId);
+  if(searchQ) items=items.filter(i=>i.name.toLowerCase().includes(searchQ)||i.loc?.toLowerCase().includes(searchQ));
+  return items;
+}
+
+// ═══════════════════════════════════════════
+//  VIEWS
+// ═══════════════════════════════════════════
+function showView(v){
+  curView=v;
+  document.getElementById('viewDash').classList.toggle('hidden',v!=='dash');
+  document.getElementById('viewDet').classList.toggle('hidden',v!=='det');
+}
+function goHome(){showView('dash');detItemId=null;renderBreadcrumb();renderAll();}
+
+// ═══════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════
+function renderSidebar(){
+  const el=document.getElementById('sbList');el.innerHTML='';
+  const q=searchQ;
+  // ALL
+  const allDiv=document.createElement('div');
+  allDiv.className='sb-all'+((!selCatId&&!dmgFilter)?' active':'');
+  allDiv.innerHTML=`<span style="font-size:13px">🗂️</span> 전체`;
+  allDiv.onclick=()=>{selCatId=null;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else renderAll();};
+  el.appendChild(allDiv);
+  DB.cats.forEach(cat=>{
+    const catItems=DB.items.filter(i=>i.cId===cat.id);
+    if(q&&!catItems.some(i=>i.name.toLowerCase().includes(q))&&!cat.name.toLowerCase().includes(q)) return;
+    const dmgCnt=catItems.reduce((s,i)=>s+(i.D||0),0);
+    const nc=document.createElement('div');
+    nc.className='nav-cat';nc.id='nc_'+cat.id;
+    const isActive=selCatId===cat.id&&!selSubId&&!dmgFilter;
+    nc.innerHTML=`
+      <div class="nav-cat-hdr${isActive?' active':''}" onclick="selectCat('${cat.id}')">
+        <div class="nc-icon">${cat.icon}</div>
+        <div class="nc-name">${cat.name}</div>
+        ${dmgCnt?`<div class="nc-dmg">⚠${dmgCnt}</div>`:''}
+        <svg class="nc-chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,4 6,8 10,4"/></svg>
+      </div>
+      <div class="nav-subs">
+        ${cat.subs.map(sub=>{
+          const cnt=DB.items.filter(i=>i.cId===cat.id&&i.sId===sub.id).length;
+          const isSubActive=selSubId===sub.id&&!dmgFilter;
+          return `<div class="nav-sub${isSubActive?' active':''}" onclick="event.stopPropagation();selectSub('${cat.id}','${sub.id}')">
+            <div class="ns-dot${isSubActive?' active':''}"></div>
+            <div class="ns-name">${sub.name}</div>
+            <div class="ns-cnt">${cnt}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    el.appendChild(nc);
+  });
+}
+function selectCat(cId){selCatId=cId;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
+function selectSub(cId,sId){selCatId=cId;selSubId=sId;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
+
+// ═══════════════════════════════════════════
+//  BREADCRUMB
+// ═══════════════════════════════════════════
+function renderBreadcrumb(){
+  const el=document.getElementById('breadcrumb');
+  const parts=[];
+  if(dmgFilter){
+    parts.push({label:'파손 장비',click:null});
+  } else if(selCatId){
+    const cat=DB.cats.find(c=>c.id===selCatId);
+    parts.push({label:cat?.name||'',click:()=>selectCat(selCatId)});
+    if(selSubId){
+      const sub=cat?.subs.find(s=>s.id===selSubId);
+      parts.push({label:sub?.name||'',click:null});
+    }
+  }
+  if(curView==='det'){
+    const item=DB.items.find(i=>i.id===detItemId);
+    if(item) parts.push({label:item.name,click:null});
+  }
+  if(!parts.length){el.innerHTML='';return;}
+  el.innerHTML='<span class="bc-sep">›</span>'+parts.map((p,i)=>
+    i===parts.length-1
+      ?`<span class="bc-cur">${p.label}</span>`
+      :`<span class="bc-link" onclick="(${p.click})()">${p.label}</span>`
+  ).join('<span class="bc-sep">›</span>');
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+function renderDash(){
+  const items=filteredItems();
+  // total bar
+  const totalBar=document.getElementById('dashTotalBar');
+  const totalQty=items.reduce((s,i)=>s+itemTotal(i),0);
+  const totalDmg=items.reduce((s,i)=>s+(i.D||0),0);
+  const gradesSummary=GRADES.filter(g=>g.key!=='D').map(g=>{
+    const sum=items.reduce((s,i)=>s+(i[g.key]||0),0);
+    return sum>0?`<div class="dtb-item"><div class="dtb-val" style="color:${gradeColor(GRADES.indexOf(g))}">${sum}</div><div class="dtb-lbl">${g.name.split('(')[0].trim()}</div></div><div class="dtb-sep"></div>`:''
+  }).join('');
+  totalBar.innerHTML=`
+    <div class="dtb-item"><div class="dtb-val" style="color:var(--accent)">${items.length}</div><div class="dtb-lbl">전체 종류</div></div>
+    <div class="dtb-sep"></div>
+    ${gradesSummary}
+    ${totalDmg?`<div class="dtb-item"><div class="dtb-val" style="color:var(--red)">${totalDmg}</div><div class="dtb-lbl">파손</div></div>`:''}
+    <div style="flex:1"></div>
+    <button class="btn pri sm" onclick="openAddModal()">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+      아이템 추가
+    </button>`;
+
+  // content
+  const scroll=document.getElementById('dashScroll');
+  if(!items.length){
+    scroll.innerHTML=`<div class="empty-state" style="padding-top:80px">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="opacity:.25"><rect x="6" y="8" width="28" height="26" rx="3"/><line x1="13" y1="16" x2="27" y2="16"/><line x1="13" y1="22" x2="22" y2="22"/></svg>
+      <span>아이템이 없습니다</span>
+    </div>`;return;
+  }
+
+  // Group by category
+  const grouped={};
+  items.forEach(item=>{
+    if(!grouped[item.cId]) grouped[item.cId]=[];
+    grouped[item.cId].push(item);
+  });
+
+  let html='';
+  Object.keys(grouped).forEach(cId=>{
+    const cat=DB.cats.find(c=>c.id===cId);
+    const catItems=grouped[cId];
+    const catDmg=catItems.reduce((s,i)=>s+(i.D||0),0);
+    const catTotal=catItems.reduce((s,i)=>s+itemTotal(i),0);
+    html+=`<div class="dash-section">
+      <div class="dash-sec-hdr">
+        <span class="dash-sec-icon">${cat?.icon||'📦'}</span>
+        <span class="dash-sec-name">${cat?.name||cId}</span>
+        <span class="dash-sec-cnt">${catItems.length}종 · 총 ${catTotal}개</span>
+        ${catDmg?`<span class="dash-sec-dmg">⚠ 파손 ${catDmg}</span>`:''}
+      </div>
+      <div class="dash-rows">
+        ${catItems.map(item=>dashRow(item)).join('')}
+      </div>
+    </div>`;
+  });
+  scroll.innerHTML=html;
+}
+
+function dashRow(item){
+  const tot=itemTotal(item);
+  const hasDmg=(item.D||0)>0;
+  const st=hasDmg?'dmg':((item.C||0)>0||(item.B||0)>2)?'warn':'ok';
+  const stLbl={ok:'정상',warn:'주의',dmg:'파손있음'}[st];
+  const thumb=driveThumb(item.driveUrl);
+  const thumbHtml=thumb
+    ?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:22px;width:44px;height:44px;align-items:center;justify-content:center">${catIcon(item.cId)}</span>`
+    :`<span style="font-size:22px">${catIcon(item.cId)}</span>`;
+
+  const gradesBadges=GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
+    const cls=['gS','gA','gB','gC'].includes(g.cls)?g.cls:'';
+    const sty=cls?'':`background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)`;
+    return `<span class="gb ${cls}" ${sty?`style="${sty}"`:''}>　${g.name.split('(')[0].trim()} ${item[g.key]}</span>`;
+  }).join('');
+  const dmgBadge=hasDmg?`<span class="gb gD">⚠ ${item.D}</span>`:'';
+
+  return `<div class="dash-row${hasDmg?' has-dmg':''}" onclick="openDetail('${item.id}')">
+    <div class="dr-thumb">${thumbHtml}</div>
+    <div class="dr-info">
+      <div class="dr-name">${item.name}</div>
+      <div class="dr-meta">
+        ${item.loc?`<div class="dr-loc"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${item.loc}</div>`:''}
+        ${item.note?`<div class="dr-note">${item.note}</div>`:''}
+      </div>
+      <div class="dr-grades" style="margin-top:5px">${gradesBadges}${dmgBadge}${!tot&&!hasDmg?`<span style="font-size:10px;color:var(--text3)">수량 없음</span>`:''}</div>
+    </div>
+    <div class="dr-status">
+      <span class="st-badge st-${st}"><span class="st-dot"></span>${stLbl}</span>
+    </div>
+    <svg class="dr-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,2 10,7 5,12"/></svg>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  DETAIL VIEW
+// ═══════════════════════════════════════════
+function openDetail(id){
+  const item=DB.items.find(i=>i.id===id);if(!item) return;
+  detItemId=id; detDriveVal=null;
+  renderDetail(item);
+  showView('det');
+  renderBreadcrumb();
+}
+
+function renderDetail(item){
+  // HEAD
+  const thumb=driveThumb(item.driveUrl);
+  const imgHtml=thumb
+    ?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:32px">${catIcon(item.cId)}</span>`
+    :`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
+  const head=document.getElementById('detHead');
+  head.innerHTML=`
+    <div class="det-img">${imgHtml}</div>
+    <div class="det-titles">
+      <div class="det-name">${item.name}</div>
+      <div class="det-path">${catPath(item)}</div>
+      <div class="det-tags">
+        ${item.loc?`<div class="det-tag"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${item.loc}</div>`:''}
+        ${item.note?`<div class="det-tag">${item.note}</div>`:''}
+        <div class="det-tag" style="background:rgba(75,140,240,.1);border-color:rgba(75,140,240,.2);color:var(--bg-g)">총 ${itemTotal(item)}개</div>
+        ${(item.D||0)>0?`<div class="det-tag" style="background:rgba(222,72,72,.1);border-color:rgba(222,72,72,.2);color:var(--red)">⚠ 파손 ${item.D}</div>`:''}
+      </div>
+    </div>
+    <div class="det-actions">
+      <button class="btn sm" onclick="editFullItem('${item.id}')">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8.5l1-3L9 1l2 2L4.5 9.5l-2.5 1z"/></svg>
+        전체 편집
+      </button>
+      <button class="btn sm" style="color:var(--red);border-color:rgba(222,72,72,.3)" onclick="askDel('${item.id}')">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,3 10,3"/><path d="M4 3V2h4v1"/><path d="M2.5 3l.6 7h5.8l.6-7"/></svg>
+        삭제
+      </button>
+    </div>`;
+
+  // BODY
+  const gradeRows=GRADES.map(g=>{
+    const cls=['gS','gA','gB','gC','gD'].includes(g.cls)?g.cls:'';
+    const badgeStyle=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
+    return `<div class="grade-bar-row">
+      <div class="gb-lbl">
+        <span class="gb ${cls}" ${badgeStyle}>${g.name.split('(')[0].trim()}</span>
+        <span class="gb-lbl-txt" style="font-size:10px;color:var(--text3)">${g.name}</span>
+      </div>
+      <div class="gb-sp"></div>
+      <div class="qc">
+        <button class="qbtn" onclick="adjDetGrade('${g.key}',-1)">−</button>
+        <div class="qnum" id="dG_${g.key}">${item[g.key]||0}</div>
+        <button class="qbtn" onclick="adjDetGrade('${g.key}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const openDriveBtn=item.driveUrl
+    ?`<button class="btn sm" onclick="window.open('${item.driveUrl}','_blank')"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M4 2H2a1 1 0 00-1 1v7a1 1 0 001 1h8a1 1 0 001-1V7"/><path d="M8 1h3v3M11 1L5 7"/></svg>열기</button>`:'';
+
+  document.getElementById('detScroll').innerHTML=`
+    <div class="det-sec">
+      <div class="det-sec-t">등급별 수량 편집</div>
+      <div class="grade-bars">${gradeRows}</div>
+    </div>
+    <div class="det-sec">
+      <div class="det-sec-t">위치 / 메모</div>
+      <div class="det-field-row">
+        <div class="det-field">
+          <div class="det-field-lbl">위치</div>
+          <input class="det-input" id="dLoc" value="${item.loc||''}" placeholder="예: 창고 선반 A-2">
+        </div>
+        <div class="det-field">
+          <div class="det-field-lbl">메모</div>
+          <input class="det-input" id="dNote" value="${item.note||''}" placeholder="스펙, 특이사항 등">
+        </div>
+      </div>
+    </div>
+    <div class="det-sec">
+      <div class="det-sec-t">사진</div>
+      <div class="det-img-zone" onclick="document.getElementById('dImgFile').click()" id="dImgZone">
+        <input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()">
+        ${thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none'">`:`<div class="iz-lbl">클릭하여 사진 추가</div>`}
+      </div>
+      <div class="drive-row" style="margin-top:8px">
+        <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="구글 드라이브 공유 링크" oninput="detDriveVal=this.value;refreshDetImg()">
+        ${openDriveBtn}
+      </div>
+      <div class="drive-hint">구글 드라이브 파일을 '링크 있는 모든 사용자'로 공유 후 링크 붙여넣기</div>
+    </div>`;
+}
+
+function adjDetGrade(k,d){
+  const item=DB.items.find(i=>i.id===detItemId);if(!item) return;
+  item[k]=Math.max(0,(item[k]||0)+d);
+  document.getElementById('dG_'+k).textContent=item[k];
+  renderDash();updateDmgChip();
+  // refresh head tags
+  const item2=DB.items.find(i=>i.id===detItemId);
+  if(item2) renderDetail(item2);
+}
+
+function prevDetImg(e){
+  const f=e.target.files[0];if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const item=DB.items.find(i=>i.id===detItemId);
+    if(!item) return;
+    item.driveUrl=''; // local override
+    const zone=document.getElementById('dImgZone');
+    if(zone) zone.innerHTML=`<input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()"><img src="${ev.target.result}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px">`;
+    // store temp
+    detDriveVal=ev.target.result; // store local url for save
+    const driveInp=document.getElementById('dDrive');
+    if(driveInp) driveInp.value='';
+  };
+  r.readAsDataURL(f);
+}
+
+function refreshDetImg(){
+  const url=document.getElementById('dDrive')?.value||'';
+  const thumb=driveThumb(url);
+  const zone=document.getElementById('dImgZone');
+  if(!zone) return;
+  if(thumb){
+    zone.innerHTML=`<input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()"><img src="${thumb}" alt="" onerror="this.style.display='none'">`;
+  }
+}
+
+function saveDetail(){
+  const item=DB.items.find(i=>i.id===detItemId);if(!item) return;
+  const loc=document.getElementById('dLoc');
+  const note=document.getElementById('dNote');
+  const drive=document.getElementById('dDrive');
+  if(loc) item.loc=loc.value.trim();
+  if(note) item.note=note.value.trim();
+  if(drive) item.driveUrl=drive.value.trim();
+  if(detDriveVal&&!item.driveUrl) item.driveUrl=detDriveVal;
+  renderAll();
+  renderDetail(item);
+  renderBreadcrumb();
+  toast('저장되었습니다 ✓');
+}
+
+// ═══════════════════════════════════════════
+//  DAMAGE FILTER
+// ═══════════════════════════════════════════
+function updateDmgChip(){
+  document.getElementById('dmgCount').textContent=DB.items.reduce((s,i)=>s+(i.D||0),0);
+}
+function toggleDmgFilter(){
+  dmgFilter=!dmgFilter;
+  selCatId=null;selSubId=null;
+  const chip=document.getElementById('dmgChip');
+  chip.style.background=dmgFilter?'rgba(222,72,72,.22)':'rgba(222,72,72,.08)';
+  chip.style.borderColor=dmgFilter?'rgba(222,72,72,.5)':'rgba(222,72,72,.25)';
+  if(curView==='det') goHome(); else {renderSidebar();renderDash();renderBreadcrumb();}
+}
+
+// ═══════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════
+function doSearch(){
+  searchQ=document.getElementById('srchInput').value.trim().toLowerCase();
+  if(curView==='det') goHome(); else {renderSidebar();renderDash();renderBreadcrumb();}
+}
+
+// ═══════════════════════════════════════════
+//  ADD / EDIT ITEM MODAL
+// ═══════════════════════════════════════════
+function openAddModal(){
+  editModalId=null;
+  document.getElementById('mTitle').textContent='아이템 추가';
+  resetMForm();fillFCat();
+  if(selCatId){document.getElementById('fCat').value=selCatId;onFCat();}
+  if(selSubId){document.getElementById('fSub').value=selSubId;onFSub();}
+  buildGradeInputs(null);
+  openMW('itemMW');
+}
+function editFullItem(id){
+  const item=DB.items.find(i=>i.id===id);if(!item) return;
+  editModalId=id;
+  document.getElementById('mTitle').textContent='아이템 수정';
+  resetMForm();fillFCat();
+  document.getElementById('fCat').value=item.cId;onFCat();
+  document.getElementById('fSub').value=item.sId;onFSub();
+  if(item.lId) document.getElementById('fLeaf').value=item.lId;
+  document.getElementById('fNm').value=item.name;
+  document.getElementById('fLoc').value=item.loc||'';
+  document.getElementById('fNote').value=item.note||'';
+  document.getElementById('fDrive').value=item.driveUrl||'';
+  buildGradeInputs(item);
+  openMW('itemMW');
+}
+function buildGradeInputs(item){
+  document.getElementById('mGradeInputs').innerHTML=GRADES.map(g=>{
+    const cls=['gS','gA','gB','gC','gD'].includes(g.cls)?g.cls:'';
+    const sty=cls?'':`background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)`;
+    return `<div class="gi-g">
+      <div class="gi-lbl ${cls}" ${sty?`style="${sty}"`:''}>${g.name.split('(')[0].trim()}</div>
+      <input class="gi-f" id="mG_${g.key}" type="number" value="${item?item[g.key]||0:0}" min="0">
+    </div>`;
+  }).join('');
+}
+function resetMForm(){
+  ['fNm','fLoc','fNote','fDrive','fNL'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('fCat').value='';
+  document.getElementById('fSub').innerHTML='<option value="">선택</option>';
+  document.getElementById('fLeaf').innerHTML='<option value="">없음</option>';
+}
+function fillFCat(){
+  const s=document.getElementById('fCat');const cur=s.value;
+  s.innerHTML='<option value="">선택</option>';
+  DB.cats.forEach(c=>s.add(new Option(c.icon+' '+c.name,c.id)));
+  if(cur)s.value=cur;
+}
+function onFCat(){
+  const cId=document.getElementById('fCat').value;
+  const ss=document.getElementById('fSub');
+  ss.innerHTML='<option value="">선택</option>';
+  document.getElementById('fLeaf').innerHTML='<option value="">없음</option>';
+  if(!cId) return;
+  DB.cats.find(c=>c.id===cId)?.subs.forEach(s=>ss.add(new Option(s.name,s.id)));
+}
+function onFSub(){
+  const cId=document.getElementById('fCat').value,sId=document.getElementById('fSub').value;
+  const ls=document.getElementById('fLeaf');
+  ls.innerHTML='<option value="">없음</option>';
+  if(!cId||!sId) return;
+  DB.cats.find(c=>c.id===cId)?.subs.find(s=>s.id===sId)?.leaves.forEach(l=>ls.add(new Option(l.name,l.id)));
+}
+function saveItem(){
+  const nm=document.getElementById('fNm').value.trim();
+  const cId=document.getElementById('fCat').value;
+  const sId=document.getElementById('fSub').value;
+  if(!nm||!cId||!sId){toast('장비명, 대분류, 중분류는 필수입니다',false);return;}
+  const nl=document.getElementById('fNL').value.trim();
+  let lId=document.getElementById('fLeaf').value||null;
+  if(nl){
+    const cat=DB.cats.find(c=>c.id===cId);
+    const sub=cat?.subs.find(s=>s.id===sId);
+    if(sub){const x={id:'l_'+Date.now(),name:nl};sub.leaves.push(x);lId=x.id;}
+  }
+  const grades={};GRADES.forEach(g=>{grades[g.key]=+document.getElementById('mG_'+g.key).value||0;});
+  const d={cId,sId,lId,name:nm,loc:document.getElementById('fLoc').value.trim(),
+    note:document.getElementById('fNote').value.trim(),
+    driveUrl:document.getElementById('fDrive').value.trim(),...grades};
+  if(editModalId){
+    const idx=DB.items.findIndex(i=>i.id===editModalId);
+    DB.items[idx]={...DB.items[idx],...d};
+    toast('수정되었습니다 ✓');
+    if(detItemId===editModalId) renderDetail(DB.items[idx]);
+  } else {
+    DB.items.push({id:'i_'+Date.now(),...d});
+    toast('추가되었습니다 ✓');
+  }
+  closeMW('itemMW');renderAll();renderBreadcrumb();
+}
+
+// ═══════════════════════════════════════════
+//  CATEGORY MODAL
+// ═══════════════════════════════════════════
+function openAddMajorCat(){document.getElementById('cNm').value='';document.getElementById('cIco').value='';document.getElementById('cType').value='major';onCType();openMW('catMW');}
+function openAddCatModal(){document.getElementById('cNm').value='';document.getElementById('cIco').value='';document.getElementById('cType').value='major';onCType();openMW('catMW');}
+function onCType(){
+  const t=document.getElementById('cType').value;
+  document.getElementById('cPG').style.display=t==='major'?'none':'block';
+  document.getElementById('cGG').style.display=t==='leaf'?'block':'none';
+  document.getElementById('cIG').style.display=t==='major'?'block':'none';
+  if(t!=='major'){const s=document.getElementById('cPar');s.innerHTML='';DB.cats.forEach(c=>s.add(new Option(c.icon+' '+c.name,c.id)));}
+  if(t==='leaf') onCPar();
+}
+function onCPar(){
+  const cId=document.getElementById('cPar').value||DB.cats[0]?.id;
+  const s=document.getElementById('cGrand');s.innerHTML='';
+  DB.cats.find(c=>c.id===cId)?.subs.forEach(x=>s.add(new Option(x.name,x.id)));
+}
+function saveCat(){
+  const t=document.getElementById('cType').value,nm=document.getElementById('cNm').value.trim();
+  if(!nm){toast('분류명을 입력하세요',false);return;}
+  if(t==='major') DB.cats.push({id:'c_'+Date.now(),name:nm,icon:document.getElementById('cIco').value.trim()||'📦',subs:[]});
+  else if(t==='sub') DB.cats.find(c=>c.id===document.getElementById('cPar').value)?.subs.push({id:'s_'+Date.now(),name:nm,leaves:[]});
+  else{const cat=DB.cats.find(c=>c.id===document.getElementById('cPar').value);cat?.subs.find(s=>s.id===document.getElementById('cGrand').value)?.leaves.push({id:'l_'+Date.now(),name:nm});}
+  closeMW('catMW');renderAll();toast(nm+' 추가됨 ✓');
+}
+
+// ═══════════════════════════════════════════
+//  GRADE SETTINGS
+// ═══════════════════════════════════════════
+function openSettings(){renderGS();openMW('settingsMW');}
+function renderGS(){
+  document.getElementById('gsBody').innerHTML=GRADES.map((g,i)=>`
+    <div class="gsr" id="gsr_${g.key}">
+      <div class="gsr-sw" style="background:${gradeColor(i)}"></div>
+      <input class="gsr-inp" id="gs_${g.key}" value="${g.name}" placeholder="등급명">
+      ${g.key==='D'?`<div style="width:20px"></div>`:`<button class="gsr-del" onclick="rmGrade('${g.key}')">×</button>`}
+    </div>`).join('');
+}
+function addGradeRow(){
+  const k='G'+Date.now().toString(36).slice(-4).toUpperCase();
+  const dIdx=GRADES.findIndex(g=>g.key==='D');
+  GRADES.splice(dIdx,0,{key:k,name:'새 등급',cls:'gX'+k});
+  DB.items.forEach(it=>{if(it[k]===undefined)it[k]=0;});
+  renderGS();
+  setTimeout(()=>{const el=document.getElementById('gs_'+k);if(el){el.select();}},50);
+}
+function rmGrade(key){if(key==='D')return;GRADES=GRADES.filter(g=>g.key!==key);renderGS();}
+function saveGradeNames(){
+  GRADES.forEach((g,i)=>{const el=document.getElementById('gs_'+g.key);if(el&&el.value.trim())g.name=el.value.trim();g.color=gradeColor(i);});
+  closeMW('settingsMW');renderAll();toast('등급 설정 저장됨 ✓');
+}
+
+// ═══════════════════════════════════════════
+//  DELETE
+// ═══════════════════════════════════════════
+let confCb=null;
+function askDel(id){
+  const item=DB.items.find(i=>i.id===id);
+  document.getElementById('confT').textContent='아이템 삭제';
+  document.getElementById('confD').textContent=`"${item?.name}"을(를) 삭제하시겠습니까?`;
+  confCb=()=>{DB.items=DB.items.filter(i=>i.id!==id);if(curView==='det')goHome();renderAll();toast('삭제되었습니다');};
+  document.getElementById('confW').classList.add('open');
+}
+function doConf(){if(confCb)confCb();closeConf();}
+function closeConf(){document.getElementById('confW').classList.remove('open');confCb=null;}
+
+// ═══════════════════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════════════════
+function renderAll(){renderSidebar();renderDash();updateDmgChip();}
+
+// Modal overlay close
+['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
+document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConf();});
+document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
+
+renderAll();
+</script>
+</body>
+</html>
