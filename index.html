@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>하도 아레나 — 장비 재고 관리</title>
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Firebase 먼저 로드 -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -17,41 +20,24 @@
   --r:10px;--rl:14px;
 }
 body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
-
-/* ─── HEADER ─────────────────────── */
-.hdr{
-  height:56px;background:var(--bg2);border-bottom:1px solid var(--border2);
-  display:flex;align-items:center;gap:12px;
-  padding:0 1.5rem;position:relative;z-index:100;flex-shrink:0
-}
+.hdr{height:56px;background:var(--bg2);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;padding:0 1.5rem;position:relative;z-index:100;flex-shrink:0}
 .hdr-badge{background:var(--accent);color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;padding:4px 10px;border-radius:6px;flex-shrink:0}
 .hdr-title{font-size:15px;font-weight:700;letter-spacing:-.02em}
-/* breadcrumb */
 .breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);margin-left:4px}
-.breadcrumb .bc-sep{opacity:.4}
-.breadcrumb .bc-link{cursor:pointer;color:var(--text2);transition:color .12s}
-.breadcrumb .bc-link:hover{color:var(--accent)}
-.breadcrumb .bc-cur{color:var(--text);font-weight:600}
-.hdr-sp{flex:1}
-.hdr-actions{display:flex;align-items:center;gap:8px}
-
-/* ─── BTN ─────────────────────────── */
+.bc-sep{opacity:.4}.bc-cur{color:var(--text);font-weight:600}
+.hdr-sp{flex:1}.hdr-actions{display:flex;align-items:center;gap:8px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .14s;border:1px solid var(--border2);background:var(--bg3);color:var(--text);white-space:nowrap}
 .btn:hover{background:var(--bg4);border-color:var(--border3)}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.pri:hover{background:var(--accent2)}
 .btn svg{width:13px;height:13px;flex-shrink:0}
 .btn.sm{padding:6px 11px;font-size:12px}
-.btn.xs{padding:4px 8px;font-size:11px}
-
-/* ─── APP ─────────────────────────── */
+.dmg-chip{display:flex;align-items:center;gap:6px;background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.25);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;color:var(--red);cursor:pointer;transition:all .15s;user-select:none}
+.dmg-chip:hover{background:rgba(224,80,80,.18)}
+.dmg-chip.active{background:rgba(224,80,80,.22);border-color:rgba(224,80,80,.5)}
 .app{display:flex;height:calc(100vh - 56px);overflow:hidden}
-
-/* ─── SIDEBAR ─────────────────────── */
-.sidebar{
-  width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border2);
-  display:flex;flex-direction:column;overflow:hidden
-}
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden}
 .sb-head{padding:12px 14px 10px;border-bottom:1px solid var(--border2);flex-shrink:0}
 .sb-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
 .sb-srch{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:0 10px;height:32px}
@@ -59,72 +45,50 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .sb-srch input{background:none;border:none;outline:none;font-size:13px;color:var(--text);font-family:inherit;width:100%}
 .sb-srch input::placeholder{color:var(--text3)}
 .sb-list{flex:1;overflow-y:auto;padding:6px 0}
-/* all */
 .sb-all{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;transition:background .12s;font-size:13px;color:var(--text2);font-weight:600}
-.sb-all:hover{background:var(--bg3)}
-.sb-all.active{background:var(--bg4);color:var(--text)}
-/* nav */
+.sb-all:hover{background:var(--bg3)}.sb-all.active{background:var(--bg4);color:var(--text)}
 .nav-cat{user-select:none}
 .nav-cat-hdr{display:flex;align-items:center;gap:8px;padding:8px 14px;transition:background .12s;cursor:pointer}
-.nav-cat-hdr:hover{background:var(--bg3)}
-.nav-cat-hdr.active{background:var(--bg4)}
+.nav-cat-hdr:hover{background:var(--bg3)}.nav-cat-hdr.active{background:var(--bg4)}
 .nc-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
 .nc-name{font-size:13px;font-weight:600;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nc-dmg{font-size:10px;color:var(--red);font-weight:700;background:rgba(224,80,80,.12);border-radius:4px;padding:2px 5px;flex-shrink:0}
 .nc-chev{color:var(--text3);width:12px;height:12px;transition:transform .15s;flex-shrink:0}
 .nav-cat.closed .nc-chev{transform:rotate(-90deg)}
-.nav-subs{padding-left:6px}
-.nav-cat.closed .nav-subs{display:none}
+.nav-subs{padding-left:6px}.nav-cat.closed .nav-subs{display:none}
 .nav-sub{display:flex;align-items:center;gap:7px;padding:6px 14px 6px 20px;cursor:pointer;transition:background .12s}
-.nav-sub:hover{background:var(--bg3)}
-.nav-sub.active{background:var(--bg4)}
+.nav-sub:hover{background:var(--bg3)}.nav-sub.active{background:var(--bg4)}
+.nav-sub:hover .ns-del-btn{display:flex}
 .ns-dot{width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0}
 .ns-dot.active{background:var(--accent)}
 .ns-name{font-size:12px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ns-cnt{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace}
-.ns-del-btn{
-  display:none;width:18px;height:18px;border-radius:4px;
-  border:none;background:rgba(224,80,80,.15);color:var(--red);
-  cursor:pointer;font-size:14px;line-height:1;
-  align-items:center;justify-content:center;flex-shrink:0;
-  transition:background .12s;padding:0;font-family:inherit
-}
+.ns-del-btn{display:none;width:18px;height:18px;border-radius:4px;border:none;background:rgba(224,80,80,.15);color:var(--red);cursor:pointer;font-size:14px;line-height:1;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;padding:0;font-family:inherit}
 .ns-del-btn:hover{background:rgba(224,80,80,.3)}
-.nav-sub:hover .ns-del-btn{display:flex}
-.sb-footer{padding:10px 12px;border-top:1px solid var(--border2);display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.sb-footer{padding:10px 12px;border-top:1px solid var(--border2);flex-shrink:0}
 .sb-add{width:100%;padding:8px;background:transparent;border:1px dashed var(--border2);border-radius:8px;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s}
 .sb-add:hover{background:var(--bg3);color:var(--text2);border-color:var(--accent)}
-
-/* ─── MAIN ─────────────────────────── */
+/* MAIN */
 .main{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
-
-/* ─── VIEW CONTAINER ─────────────────── */
 .view{position:absolute;inset:0;display:flex;flex-direction:column;transition:opacity .2s,transform .2s}
 .view.hidden{opacity:0;pointer-events:none;transform:translateX(12px)}
-
-/* ─── DASHBOARD (view-home) ─────────── */
+/* DASHBOARD */
+.dash-total-bar{display:flex;align-items:center;gap:20px;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border2);flex-shrink:0}
+.dtb-item{display:flex;flex-direction:column;align-items:center;gap:3px}
+.dtb-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1}
+.dtb-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+.dtb-sep{width:1px;height:32px;background:var(--border2);flex-shrink:0}
 .dash-scroll{flex:1;overflow-y:auto;padding:18px 20px}
 .dash-section{margin-bottom:28px}
 .dash-sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border2)}
-.dash-sec-icon{font-size:18px}
-.dash-sec-name{font-size:15px;font-weight:700}
+.dash-sec-icon{font-size:18px}.dash-sec-name{font-size:15px;font-weight:700}
 .dash-sec-cnt{font-family:'Space Mono',monospace;font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px}
 .dash-sec-dmg{font-family:'Space Mono',monospace;font-size:12px;color:var(--red);background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.22);border-radius:5px;padding:3px 9px}
-
-/* Summary row cards per category */
 .dash-rows{display:flex;flex-direction:column;gap:8px}
-.dash-row{
-  display:flex;align-items:center;gap:16px;
-  background:var(--bg2);border:1px solid var(--border2);border-radius:12px;
-  padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden
-}
+.dash-row{display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
 .dash-row:hover{background:var(--bg3);border-color:var(--border3);transform:translateX(3px)}
 .dash-row.has-dmg{border-left:3px solid var(--red);padding-left:16px}
-.dr-thumb{
-  width:52px;height:52px;border-radius:10px;background:var(--bg4);
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)
-}
+.dr-thumb{width:52px;height:52px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)}
 .dr-thumb img{width:100%;height:100%;object-fit:cover;border-radius:10px}
 .dr-info{flex:1;min-width:0}
 .dr-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -139,53 +103,29 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .gB{background:rgba(75,140,240,.13);color:#7eb5ff;border:1px solid rgba(75,140,240,.28)}
 .gC{background:rgba(232,185,48,.13);color:#f5d060;border:1px solid rgba(232,185,48,.28)}
 .gD{background:rgba(224,80,80,.14);color:#ff7878;border:1px solid rgba(224,80,80,.3)}
-/* 총수량 블록 */
 .dr-total-block{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:60px;padding:0 8px;border-left:1px solid var(--border2)}
 .dr-total-num{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--text);line-height:1}
 .dr-total-lbl{font-size:11px;color:var(--text3);margin-top:4px}
-.dr-status{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.dr-status{flex-shrink:0}
 .st-badge{font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;display:flex;align-items:center;gap:5px;white-space:nowrap}
 .st-ok{background:rgba(46,196,126,.1);color:var(--green);border:1px solid rgba(46,196,126,.22)}
 .st-warn{background:rgba(232,185,48,.1);color:var(--yellow);border:1px solid rgba(232,185,48,.22)}
 .st-dmg{background:rgba(224,80,80,.12);color:var(--red);border:1px solid rgba(224,80,80,.28)}
 .st-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 .dr-chevron{color:var(--text3);width:16px;height:16px;flex-shrink:0;opacity:.4}
-
-/* Total bar */
-.dash-total-bar{
-  display:flex;align-items:center;gap:20px;
-  padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border2);flex-shrink:0
-}
-.dtb-item{display:flex;flex-direction:column;align-items:center;gap:3px}
-.dtb-val{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1}
-.dtb-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
-.dtb-sep{width:1px;height:32px;background:var(--border2);flex-shrink:0}
-
-/* ─── DETAIL VIEW ─────────────────────── */
-.det-head{
-  display:flex;align-items:flex-start;gap:16px;
-  padding:16px 20px;border-bottom:1px solid var(--border2);
-  background:var(--bg2);flex-shrink:0
-}
-.det-img{
-  width:80px;height:80px;border-radius:12px;background:var(--bg4);
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)
-}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:10px;color:var(--text3);font-size:13px}
+/* DETAIL */
+.det-head{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;border-bottom:1px solid var(--border2);background:var(--bg2);flex-shrink:0}
+.det-img{width:80px;height:80px;border-radius:12px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)}
 .det-img img{width:100%;height:100%;object-fit:cover;border-radius:12px}
 .det-titles{flex:1;min-width:0}
 .det-name{font-size:20px;font-weight:800;line-height:1.2;margin-bottom:5px}
 .det-path{font-size:12px;color:var(--text3);margin-bottom:10px}
 .det-tags{display:flex;gap:7px;flex-wrap:wrap}
 .det-tag{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px}
-.det-tag svg{width:11px;height:11px;flex-shrink:0}
 .det-actions{display:flex;gap:7px;flex-shrink:0;align-items:flex-start}
-
 .det-scroll{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:18px}
-.det-sec{}
 .det-sec-t{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
-
-/* Grade bars in detail */
 .grade-bars{display:flex;flex-direction:column;gap:8px}
 .grade-bar-row{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:11px 14px}
 .gb-lbl{min-width:110px;display:flex;align-items:center;gap:7px}
@@ -195,37 +135,22 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .qbtn{width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);background:var(--bg4);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .12s;font-family:inherit;line-height:1}
 .qbtn:hover{background:var(--bg5);color:var(--text);border-color:var(--accent)}
 .qnum{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--text);min-width:36px;text-align:center}
-
-/* Fields in detail */
 .det-field-row{display:flex;gap:12px}
 .det-field{flex:1;display:flex;flex-direction:column;gap:6px}
 .det-field-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
 .det-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .14s}
 .det-input:focus{border-color:var(--accent)}
 .det-input::placeholder{color:var(--text3)}
-
-/* Image zone in detail */
-.det-img-zone{
-  border:1.5px dashed var(--border2);border-radius:9px;
-  background:var(--bg3);display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:6px;min-height:100px;cursor:pointer;
-  transition:all .14s;position:relative;overflow:hidden
-}
+.det-img-zone{border:1.5px dashed var(--border2);border-radius:9px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:100px;cursor:pointer;transition:all .14s;position:relative;overflow:hidden}
 .det-img-zone:hover{border-color:var(--accent);background:var(--bg4)}
-.det-img-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .det-img-zone img{width:100%;max-height:180px;object-fit:cover;border-radius:8px;display:block}
-.det-img-zone .iz-lbl{font-size:11px;color:var(--text3)}
-.drive-hint{font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5}
-.drive-row{display:flex;gap:7px;align-items:center}
+.iz-lbl{font-size:11px;color:var(--text3)}
+.drive-row{display:flex;gap:7px;align-items:center;margin-top:8px}
 .drive-row .det-input{flex:1}
-
-.det-save-bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+.drive-hint{font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5}
+.det-save-bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border2);flex-shrink:0}
 .det-save-bar .btn{flex:1;justify-content:center}
-
-/* ─── EMPTY ─────────────────────────── */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--text3);font-size:13px}
-
-/* ─── MODALS ─────────────────────────── */
+/* MODALS */
 .mw{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .2s}
 .mw.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.35rem;width:100%;max-width:500px;transform:translateY(12px);transition:transform .2s;max-height:90vh;overflow-y:auto}
@@ -248,44 +173,45 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .gi-lbl{font-size:10px;font-weight:700;padding:3px 6px;border-radius:4px;text-align:center;white-space:nowrap;overflow:hidden;max-width:100%}
 .gi-f{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px;color:var(--text);font-family:'Space Mono',monospace;font-size:15px;font-weight:700;text-align:center;outline:none;transition:border-color .14s}
 .gi-f:focus{border-color:var(--accent)}
-
-/* Grade settings */
+/* GRADE SETTINGS */
 .grade-settings{display:flex;flex-direction:column;gap:5px}
 .gsr{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px}
 .gsr-sw{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .gsr-inp{background:transparent;border:none;border-bottom:1px solid var(--border2);outline:none;font-size:12px;font-weight:600;color:var(--text);font-family:inherit;flex:1;padding:1px 3px;transition:border-color .12s}
 .gsr-inp:focus{border-bottom-color:var(--accent)}
-.gsr-del{width:20px;height:20px;border-radius:4px;border:1px solid rgba(222,72,72,.3);background:none;color:rgba(222,72,72,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;flex-shrink:0}
-.gsr-del:hover{background:rgba(222,72,72,.15);color:var(--red)}
+.gsr-del{width:20px;height:20px;border-radius:4px;border:1px solid rgba(224,80,80,.3);background:none;color:rgba(224,80,80,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;flex-shrink:0}
+.gsr-del:hover{background:rgba(224,80,80,.15);color:var(--red)}
 .gs-add{width:100%;padding:7px;border:1px dashed var(--border2);border-radius:6px;background:none;color:var(--text3);font-size:11px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;margin-top:4px}
 .gs-add:hover{background:var(--bg3);color:var(--text2);border-color:var(--accent)}
-
-/* Confirm */
+/* CONFIRM */
 .cw{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s}
 .cw.open{opacity:1;pointer-events:all}
 .cb{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:1.25rem;max-width:300px;width:90%}
 .ct{font-size:13px;font-weight:700;margin-bottom:6px}
-.cd{font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.5}
+.cd{font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.5;white-space:pre-wrap}
 .ca{display:flex;gap:7px;justify-content:flex-end}
 .btn-del{background:var(--red);border-color:var(--red);color:#fff}
 .btn-del:hover{background:#b83030}
-
-/* Toast */
+/* TOAST */
 .toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text);z-index:900;display:flex;align-items:center;gap:7px;transform:translateY(10px);opacity:0;pointer-events:none;transition:all .2s}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{border-color:rgba(46,196,126,.3)}
-
+/* LOADING */
+.loading-ov{position:fixed;inset:0;background:rgba(13,15,20,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px}
+.loading-spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:#4b8cf0;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
-
-@media(max-width:680px){
-  .sidebar{width:170px}
-  .fg2{grid-template-columns:1fr}
-}
 </style>
 </head>
 <body>
+
+<!-- LOADING -->
+<div class="loading-ov" id="loadingOv">
+  <div class="loading-spin"></div>
+  <div style="font-size:14px;color:#7a83a0">Firebase 연결 중...</div>
+</div>
 
 <!-- HEADER -->
 <header class="hdr">
@@ -294,11 +220,11 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="hdr-sp"></div>
   <div class="hdr-actions">
-    <button class="btn sm" onclick="openSettings()">
+    <button class="btn sm" id="btnSettings">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="2.5"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1.1 1.1M10 10l1.1 1.1M11.1 2.9l-1.1 1.1M4 10l-1.1 1.1"/></svg>
       등급 설정
     </button>
-    <div class="btn sm" id="dmgChip" onclick="toggleDmgFilter()" style="color:var(--red);border-color:rgba(222,72,72,.25);background:rgba(222,72,72,.08);cursor:pointer">
+    <div class="dmg-chip" id="dmgChip">
       ⚠ 파손 <span style="font-family:'Space Mono',monospace;font-weight:700" id="dmgCount">0</span>
     </div>
   </div>
@@ -306,62 +232,50 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 
 <!-- APP -->
 <div class="app">
-
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sb-head">
       <div class="sb-lbl">분류</div>
       <div class="sb-srch">
         <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
-        <input type="text" placeholder="검색..." id="srchInput" oninput="doSearch()">
+        <input type="text" placeholder="검색..." id="srchInput">
       </div>
     </div>
     <div class="sb-list" id="sbList"></div>
     <div class="sb-footer">
-      <button class="sb-add" onclick="openAddCatModal()">
+      <button class="sb-add" id="btnAddCat">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
         분류 추가
       </button>
     </div>
   </aside>
-
-  <!-- MAIN -->
   <div class="main">
-
-    <!-- VIEW: DASHBOARD -->
+    <!-- DASHBOARD VIEW -->
     <div class="view" id="viewDash">
-      <!-- total bar -->
       <div class="dash-total-bar" id="dashTotalBar"></div>
-      <!-- content -->
       <div class="dash-scroll" id="dashScroll"></div>
     </div>
-
-    <!-- VIEW: DETAIL -->
+    <!-- DETAIL VIEW -->
     <div class="view hidden" id="viewDet">
       <div class="det-head" id="detHead"></div>
       <div class="det-scroll" id="detScroll"></div>
       <div class="det-save-bar">
-        <button class="btn" onclick="goHome()">← 목록으로</button>
-        <button class="btn pri" onclick="saveDetail()">변경 저장</button>
+        <button class="btn" id="btnGoHome">← 목록으로</button>
+        <button class="btn pri" id="btnSaveDet">변경 저장</button>
       </div>
     </div>
-
   </div>
 </div>
 
 <!-- ADD ITEM MODAL -->
 <div class="mw" id="itemMW">
   <div class="modal">
-    <div class="m-hdr">
-      <div class="m-title" id="mTitle">아이템 추가</div>
-      <button class="mc" onclick="closeMW('itemMW')">×</button>
+    <div class="m-hdr"><div class="m-title" id="mTitle">아이템 추가</div><button class="mc" id="btnCloseItemMW">×</button></div>
+    <div class="fg2">
+      <div class="fg"><div class="fl">대분류 *</div><select class="fs" id="fCat"></select></div>
+      <div class="fg"><div class="fl">중분류 *</div><select class="fs" id="fSub"></select></div>
     </div>
     <div class="fg2">
-      <div class="fg"><div class="fl">대분류 *</div><select class="fs" id="fCat" onchange="onFCat()"><option value="">선택</option></select></div>
-      <div class="fg"><div class="fl">중분류 *</div><select class="fs" id="fSub" onchange="onFSub()"><option value="">선택</option></select></div>
-    </div>
-    <div class="fg2">
-      <div class="fg"><div class="fl">소분류</div><select class="fs" id="fLeaf"><option value="">없음</option></select></div>
+      <div class="fg"><div class="fl">소분류</div><select class="fs" id="fLeaf"></select></div>
       <div class="fg"><div class="fl">새 소분류 입력</div><input class="fi" id="fNL" placeholder="직접 입력"></div>
     </div>
     <div class="fg"><div class="fl">장비명 *</div><input class="fi" id="fNm" placeholder="예: HDMI 케이블 20m"></div>
@@ -373,8 +287,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     <div class="fl" style="margin-bottom:7px">등급별 수량</div>
     <div class="grade-inp-row" id="mGradeInputs"></div>
     <div class="m-foot">
-      <button class="btn" onclick="closeMW('itemMW')">취소</button>
-      <button class="btn pri" onclick="saveItem()">저장</button>
+      <button class="btn" id="btnCancelItem">취소</button>
+      <button class="btn pri" id="btnSaveItem">저장</button>
     </div>
   </div>
 </div>
@@ -382,27 +296,27 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 <!-- CAT MODAL -->
 <div class="mw" id="catMW">
   <div class="modal" style="max-width:370px">
-    <div class="m-hdr"><div class="m-title">분류 추가</div><button class="mc" onclick="closeMW('catMW')">×</button></div>
-    <div class="fg"><div class="fl">종류</div><select class="fs" id="cType" onchange="onCType()"><option value="major">대분류</option><option value="sub">중분류</option><option value="leaf">소분류</option></select></div>
-    <div class="fg" id="cPG" style="display:none"><div class="fl">상위 대분류</div><select class="fs" id="cPar" onchange="onCPar()"></select></div>
+    <div class="m-hdr"><div class="m-title">분류 추가</div><button class="mc" id="btnCloseCatMW">×</button></div>
+    <div class="fg"><div class="fl">종류</div><select class="fs" id="cType"><option value="major">대분류</option><option value="sub">중분류</option><option value="leaf">소분류</option></select></div>
+    <div class="fg" id="cPG" style="display:none"><div class="fl">상위 대분류</div><select class="fs" id="cPar"></select></div>
     <div class="fg" id="cGG" style="display:none"><div class="fl">상위 중분류</div><select class="fs" id="cGrand"></select></div>
     <div class="fg"><div class="fl">분류명 *</div><input class="fi" id="cNm" placeholder="분류명"></div>
     <div class="fg" id="cIG"><div class="fl">아이콘 이모지</div><input class="fi" id="cIco" placeholder="📦" style="font-size:18px;text-align:center;max-width:80px"></div>
-    <div class="m-foot"><button class="btn" onclick="closeMW('catMW')">취소</button><button class="btn pri" onclick="saveCat()">추가</button></div>
+    <div class="m-foot"><button class="btn" id="btnCancelCat">취소</button><button class="btn pri" id="btnSaveCat">추가</button></div>
   </div>
 </div>
 
-<!-- GRADE SETTINGS -->
+<!-- GRADE SETTINGS MODAL -->
 <div class="mw" id="settingsMW">
   <div class="modal" style="max-width:350px">
-    <div class="m-hdr"><div class="m-title">등급 설정</div><button class="mc" onclick="closeMW('settingsMW')">×</button></div>
+    <div class="m-hdr"><div class="m-title">등급 설정</div><button class="mc" id="btnCloseSettingsMW">×</button></div>
     <div style="font-size:11px;color:var(--text3);margin-bottom:10px">이름 변경·추가·삭제 가능. 파손 등급(마지막)은 삭제 불가.</div>
     <div class="grade-settings" id="gsBody"></div>
-    <button class="gs-add" onclick="addGradeRow()">
+    <button class="gs-add" id="btnAddGrade">
       <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
       등급 추가
     </button>
-    <div class="m-foot"><button class="btn" onclick="closeMW('settingsMW')">닫기</button><button class="btn pri" onclick="saveGradeNames()">저장</button></div>
+    <div class="m-foot"><button class="btn" id="btnCancelSettings">닫기</button><button class="btn pri" id="btnSaveGrades">저장</button></div>
   </div>
 </div>
 
@@ -411,19 +325,17 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   <div class="cb">
     <div class="ct" id="confT">삭제 확인</div>
     <div class="cd" id="confD">삭제하시겠습니까?</div>
-    <div class="ca"><button class="btn" onclick="closeConf()">취소</button><button class="btn btn-del" onclick="doConf()">삭제</button></div>
+    <div class="ca"><button class="btn" id="btnCancelConf">취소</button><button class="btn btn-del" id="btnDoConf">삭제</button></div>
   </div>
 </div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-// ═══════════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyB_s7fPr6dcXnHDdPyvecutERvAOjRYRqg",
   authDomain: "hado-arena-storage.firebaseapp.com",
@@ -433,17 +345,14 @@ const firebaseConfig = {
   messagingSenderId: "664691174215",
   appId: "1:664691174215:web:fda726164c7f3ca307fa62"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const DB_REF = firebase.database();
+function fbSet(p,d){return DB_REF.ref(p).set(d);}
+function fbRemove(p){return DB_REF.ref(p).remove();}
 
-function fbSet(path, data){ return db.ref(path).set(data); }
-function fbRemove(path){ return db.ref(path).remove(); }
-function fbUpdate(path, data){ return db.ref(path).update(data); }
-
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  GRADES
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 let GRADES=[
   {key:'S',name:'S급 (미개봉)',cls:'gS'},
   {key:'A',name:'A급',cls:'gA'},
@@ -451,13 +360,13 @@ let GRADES=[
   {key:'C',name:'C급',cls:'gC'},
   {key:'D',name:'파손',cls:'gD'},
 ];
-const SWATCH=['#a85ef5','#2ec47e','#4b8cf0','#e8b930','#de4848','#ff8c42','#00c4cc','#ff6b9d'];
+const SWATCH=['#b06bff','#2ec47e','#4b8cf0','#e8b930','#e05050','#ff8c42','#00c4cc','#ff6b9d'];
 function gradeColor(i){return SWATCH[i%SWATCH.length];}
 
-// ═══════════════════════════════════════════
-//  DATA (Firebase Realtime DB)
-// ═══════════════════════════════════════════
-const DEFAULT_CATS = [
+// ═══════════════════════════════════
+//  DATA
+// ═══════════════════════════════════
+const DEFAULT_CATS=[
   {id:'c1',name:'인터넷 연결',icon:'🌐',subs:[
     {id:'s1',name:'LAN 케이블',leaves:[{id:'l1',name:'CAT.6'},{id:'l2',name:'CAT.7'},{id:'l3',name:'패치 케이블'}]},
     {id:'s2',name:'공유기 / 허브',leaves:[]},
@@ -477,96 +386,17 @@ const DEFAULT_CATS = [
     {id:'s10',name:'공구 / 기타',leaves:[]},
   ]},
 ];
+let DB={cats:[],items:[]};
 
-let DB = { cats: [], items: [] };
-
-// 로딩 상태 표시
-function showLoading(on){
-  let el = document.getElementById('loadingOverlay');
-  if(on && !el){
-    el = document.createElement('div');
-    el.id = 'loadingOverlay';
-    el.style.cssText = 'position:fixed;inset:0;background:rgba(13,15,20,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px;';
-    el.innerHTML = `<div style="width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:#4b8cf0;border-radius:50%;animation:spin .7s linear infinite"></div>
-      <div style="font-size:14px;color:#7a83a0">Firebase 연결 중...</div>
-      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
-    document.body.appendChild(el);
-  } else if(!on && el){
-    el.remove();
-  }
-}
-
-// Firebase에서 실시간 데이터 구독
-function initFirebase(){
-  showLoading(true);
-
-  db.ref('cats').on('value', snap => {
-    const val = snap.val();
-    if(val){
-      DB.cats = Object.values(val).map(cat => ({
-        ...cat,
-        subs: cat.subs ? Object.values(cat.subs).map(sub => ({
-          ...sub,
-          leaves: sub.leaves ? Object.values(sub.leaves) : []
-        })) : []
-      }));
-    } else {
-      DB.cats = DEFAULT_CATS;
-      saveCatsToFB();
-    }
-    renderAll();
-    showLoading(false);
-  });
-
-  db.ref('items').on('value', snap => {
-    const val = snap.val();
-    DB.items = val ? Object.values(val) : [];
-    renderAll();
-    updateDmgChip();
-  });
-
-  db.ref('grades').on('value', snap => {
-    const val = snap.val();
-    if(val) GRADES = Object.values(val);
-  });
-}
-
-function saveCatsToFB(){
-  const catsObj = {};
-  DB.cats.forEach(cat => {
-    const subsObj = {};
-    (cat.subs||[]).forEach(sub => {
-      const leavesObj = {};
-      (sub.leaves||[]).forEach(l => { leavesObj[l.id] = l; });
-      subsObj[sub.id] = {...sub, leaves: leavesObj};
-    });
-    catsObj[cat.id] = {...cat, subs: subsObj};
-  });
-  fbSet('cats', catsObj);
-}
-
-function saveItemToFB(item){
-  fbSet('items/'+item.id, item);
-}
-function deleteItemFromFB(id){
-  fbRemove('items/'+id);
-}
-function saveGradesToFB(){
-  const obj = {};
-  GRADES.forEach((g,i) => { obj[i] = g; });
-  fbSet('grades', obj);
-}
-
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 let selCatId=null,selSubId=null,detItemId=null,editModalId=null;
-let searchQ='',dmgFilter=false,curView='dash'; // 'dash' | 'det'
-let detDriveVal=null;
+let searchQ='',dmgFilter=false,curView='dash',confCb=null,detDriveVal=null;
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 function catIcon(cId){const c=DB.cats.find(x=>x.id===cId);return c?c.icon:'📦';}
 function catPath(item){
   const c=DB.cats.find(x=>x.id===item.cId);
@@ -575,17 +405,13 @@ function catPath(item){
   return [c?.name,s?.name,l?.name].filter(Boolean).join(' › ');
 }
 function driveThumb(url){
-  if(!url) return null;
-  let id=null;
+  if(!url)return null;
   let m=url.match(/\/file\/d\/([^/?#]+)/);
-  if(m) id=m[1];
+  let id=m?m[1]:null;
   if(!id){m=url.match(/[?&]id=([^&]+)/);if(m)id=m[1];}
-  if(!id) return null;
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
+  return id?`https://drive.google.com/thumbnail?id=${id}&sz=w400`:null;
 }
 function itemTotal(item){return GRADES.filter(g=>g.key!=='D').reduce((s,g)=>s+(item[g.key]||0),0);}
-function openMW(id){document.getElementById(id).classList.add('open');}
-function closeMW(id){document.getElementById(id).classList.remove('open');}
 let tT;
 function toast(msg,ok=true){
   const el=document.getElementById('toast');
@@ -595,16 +421,61 @@ function toast(msg,ok=true){
 }
 function filteredItems(){
   let items=DB.items;
-  if(dmgFilter) items=items.filter(i=>(i.D||0)>0);
-  else if(selSubId) items=items.filter(i=>i.cId===selCatId&&i.sId===selSubId);
-  else if(selCatId) items=items.filter(i=>i.cId===selCatId);
-  if(searchQ) items=items.filter(i=>i.name.toLowerCase().includes(searchQ)||i.loc?.toLowerCase().includes(searchQ));
+  if(dmgFilter)items=items.filter(i=>(i.D||0)>0);
+  else if(selSubId)items=items.filter(i=>i.cId===selCatId&&i.sId===selSubId);
+  else if(selCatId)items=items.filter(i=>i.cId===selCatId);
+  if(searchQ)items=items.filter(i=>i.name.toLowerCase().includes(searchQ)||i.loc?.toLowerCase().includes(searchQ));
   return items;
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
+//  FIREBASE SYNC
+// ═══════════════════════════════════
+function saveCatsToFB(){
+  const obj={};
+  DB.cats.forEach(cat=>{
+    const subsObj={};
+    (cat.subs||[]).forEach(sub=>{
+      const leavesObj={};
+      (sub.leaves||[]).forEach(l=>{leavesObj[l.id]=l;});
+      subsObj[sub.id]={...sub,leaves:leavesObj};
+    });
+    obj[cat.id]={...cat,subs:subsObj};
+  });
+  fbSet('cats',obj);
+}
+function saveItemToFB(item){fbSet('items/'+item.id,item);}
+function deleteItemFromFB(id){fbRemove('items/'+id);}
+function saveGradesToFB(){const obj={};GRADES.forEach((g,i)=>{obj[i]=g;});fbSet('grades',obj);}
+
+function initFirebase(){
+  document.getElementById('loadingOv').style.display='flex';
+  DB_REF.ref('cats').on('value',snap=>{
+    const val=snap.val();
+    if(val){
+      DB.cats=Object.values(val).map(cat=>({
+        ...cat,
+        subs:cat.subs?Object.values(cat.subs).map(sub=>({...sub,leaves:sub.leaves?Object.values(sub.leaves):[]})):[]
+      }));
+    } else {
+      DB.cats=DEFAULT_CATS;
+      saveCatsToFB();
+    }
+    renderAll();
+    document.getElementById('loadingOv').style.display='none';
+  });
+  DB_REF.ref('items').on('value',snap=>{
+    DB.items=snap.val()?Object.values(snap.val()):[];
+    renderAll();updateDmgChip();
+  });
+  DB_REF.ref('grades').on('value',snap=>{
+    if(snap.val())GRADES=Object.values(snap.val());
+  });
+}
+
+// ═══════════════════════════════════
 //  VIEWS
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 function showView(v){
   curView=v;
   document.getElementById('viewDash').classList.toggle('hidden',v!=='dash');
@@ -612,137 +483,117 @@ function showView(v){
 }
 function goHome(){showView('dash');detItemId=null;renderBreadcrumb();renderAll();}
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  SIDEBAR
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 function renderSidebar(){
   const el=document.getElementById('sbList');el.innerHTML='';
   const q=searchQ;
-  // ALL
   const allDiv=document.createElement('div');
   allDiv.className='sb-all'+((!selCatId&&!dmgFilter)?' active':'');
-  allDiv.innerHTML=`<span style="font-size:13px">🗂️</span> 전체`;
-  allDiv.onclick=()=>{selCatId=null;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else renderAll();};
+  allDiv.innerHTML='<span style="font-size:13px">🗂️</span> 전체';
+  allDiv.addEventListener('click',()=>{selCatId=null;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').classList.remove('active');if(curView==='det')goHome();else renderAll();});
   el.appendChild(allDiv);
   DB.cats.forEach(cat=>{
     const catItems=DB.items.filter(i=>i.cId===cat.id);
-    if(q&&!catItems.some(i=>i.name.toLowerCase().includes(q))&&!cat.name.toLowerCase().includes(q)) return;
+    if(q&&!catItems.some(i=>i.name.toLowerCase().includes(q))&&!cat.name.toLowerCase().includes(q))return;
     const dmgCnt=catItems.reduce((s,i)=>s+(i.D||0),0);
     const nc=document.createElement('div');
-    nc.className='nav-cat';nc.id='nc_'+cat.id;
+    nc.className='nav-cat';
     const isActive=selCatId===cat.id&&!selSubId&&!dmgFilter;
-    nc.innerHTML=`
-      <div class="nav-cat-hdr${isActive?' active':''}" onclick="selectCat('${cat.id}')">
-        <div class="nc-icon">${cat.icon}</div>
-        <div class="nc-name">${cat.name}</div>
-        ${dmgCnt?`<div class="nc-dmg">⚠${dmgCnt}</div>`:''}
-        <svg class="nc-chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,4 6,8 10,4"/></svg>
-      </div>
-      <div class="nav-subs">
-        ${cat.subs.map(sub=>{
-          const cnt=DB.items.filter(i=>i.cId===cat.id&&i.sId===sub.id).length;
-          const isSubActive=selSubId===sub.id&&!dmgFilter;
-          return `<div class="nav-sub${isSubActive?' active':''}" onclick="event.stopPropagation();selectSub('${cat.id}','${sub.id}')">
-            <div class="ns-dot${isSubActive?' active':''}"></div>
-            <div class="ns-name">${sub.name}</div>
-            <div class="ns-cnt">${cnt}</div>
-            <button class="ns-del-btn" onclick="event.stopPropagation();askDelSub('${cat.id}','${sub.id}')" title="삭제">×</button>
-          </div>`;
-        }).join('')}
-      </div>`;
+    nc.innerHTML=`<div class="nav-cat-hdr${isActive?' active':''}" data-catid="${cat.id}">
+      <div class="nc-icon">${cat.icon}</div>
+      <div class="nc-name">${cat.name}</div>
+      ${dmgCnt?`<div class="nc-dmg">⚠${dmgCnt}</div>`:''}
+      <svg class="nc-chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,4 6,8 10,4"/></svg>
+    </div>
+    <div class="nav-subs">
+      ${cat.subs.map(sub=>{
+        const cnt=DB.items.filter(i=>i.cId===cat.id&&i.sId===sub.id).length;
+        const isSubActive=selSubId===sub.id&&!dmgFilter;
+        return `<div class="nav-sub${isSubActive?' active':''}" data-catid="${cat.id}" data-subid="${sub.id}">
+          <div class="ns-dot${isSubActive?' active':''}"></div>
+          <div class="ns-name">${sub.name}</div>
+          <div class="ns-cnt">${cnt}</div>
+          <button class="ns-del-btn" data-catid="${cat.id}" data-subid="${sub.id}">×</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+    nc.querySelector('.nav-cat-hdr').addEventListener('click',()=>selectCat(cat.id));
+    nc.querySelectorAll('.nav-sub').forEach(el=>{
+      el.addEventListener('click',e=>{
+        if(e.target.classList.contains('ns-del-btn'))return;
+        selectSub(el.dataset.catid,el.dataset.subid);
+      });
+    });
+    nc.querySelectorAll('.ns-del-btn').forEach(btn=>{
+      btn.addEventListener('click',e=>{e.stopPropagation();askDelSub(btn.dataset.catid,btn.dataset.subid);});
+    });
     el.appendChild(nc);
   });
 }
-function selectCat(cId){selCatId=cId;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
-function selectSub(cId,sId){selCatId=cId;selSubId=sId;dmgFilter=false;document.getElementById('dmgChip').style.background='rgba(222,72,72,.08)';if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
+function selectCat(cId){selCatId=cId;selSubId=null;dmgFilter=false;document.getElementById('dmgChip').classList.remove('active');if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
+function selectSub(cId,sId){selCatId=cId;selSubId=sId;dmgFilter=false;document.getElementById('dmgChip').classList.remove('active');if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}}
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  BREADCRUMB
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 function renderBreadcrumb(){
   const el=document.getElementById('breadcrumb');
   const parts=[];
-  if(dmgFilter){
-    parts.push({label:'파손 장비',click:null});
-  } else if(selCatId){
+  if(dmgFilter){parts.push('파손 장비');}
+  else if(selCatId){
     const cat=DB.cats.find(c=>c.id===selCatId);
-    parts.push({label:cat?.name||'',click:()=>selectCat(selCatId)});
-    if(selSubId){
-      const sub=cat?.subs.find(s=>s.id===selSubId);
-      parts.push({label:sub?.name||'',click:null});
-    }
+    parts.push(cat?.name||'');
+    if(selSubId){const sub=cat?.subs.find(s=>s.id===selSubId);parts.push(sub?.name||'');}
   }
-  if(curView==='det'){
-    const item=DB.items.find(i=>i.id===detItemId);
-    if(item) parts.push({label:item.name,click:null});
-  }
+  if(curView==='det'){const item=DB.items.find(i=>i.id===detItemId);if(item)parts.push(item.name);}
   if(!parts.length){el.innerHTML='';return;}
-  el.innerHTML='<span class="bc-sep">›</span>'+parts.map((p,i)=>
-    i===parts.length-1
-      ?`<span class="bc-cur">${p.label}</span>`
-      :`<span class="bc-link" onclick="(${p.click})()">${p.label}</span>`
-  ).join('<span class="bc-sep">›</span>');
+  el.innerHTML='<span class="bc-sep">›</span>'+parts.map((p,i)=>i===parts.length-1?`<span class="bc-cur">${p}</span>`:`<span style="color:var(--text2)">${p}</span>`).join('<span class="bc-sep">›</span>');
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  DASHBOARD
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 function renderDash(){
   const items=filteredItems();
-  // total bar
-  const totalBar=document.getElementById('dashTotalBar');
-  const totalQty=items.reduce((s,i)=>s+itemTotal(i),0);
   const totalDmg=items.reduce((s,i)=>s+(i.D||0),0);
-  const gradesSummary=GRADES.filter(g=>g.key!=='D').map(g=>{
+  const bar=document.getElementById('dashTotalBar');
+  const gradeSum=GRADES.filter(g=>g.key!=='D').map(g=>{
     const sum=items.reduce((s,i)=>s+(i[g.key]||0),0);
     return sum>0?`<div class="dtb-item"><div class="dtb-val" style="color:${gradeColor(GRADES.indexOf(g))}">${sum}</div><div class="dtb-lbl">${g.name.split('(')[0].trim()}</div></div><div class="dtb-sep"></div>`:''
   }).join('');
-  totalBar.innerHTML=`
-    <div class="dtb-item"><div class="dtb-val" style="color:var(--accent)">${items.length}</div><div class="dtb-lbl">전체 종류</div></div>
-    <div class="dtb-sep"></div>
-    ${gradesSummary}
+  bar.innerHTML=`<div class="dtb-item"><div class="dtb-val" style="color:var(--accent)">${items.length}</div><div class="dtb-lbl">전체 종류</div></div>
+    <div class="dtb-sep"></div>${gradeSum}
     ${totalDmg?`<div class="dtb-item"><div class="dtb-val" style="color:var(--red)">${totalDmg}</div><div class="dtb-lbl">파손</div></div>`:''}
     <div style="flex:1"></div>
-    <button class="btn pri sm" onclick="openAddModal()">
-      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
-      아이템 추가
+    <button class="btn pri sm" id="btnAddItem2">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>아이템 추가
     </button>`;
+  document.getElementById('btnAddItem2')?.addEventListener('click',()=>openAddModal());
 
-  // content
   const scroll=document.getElementById('dashScroll');
-  if(!items.length){
-    scroll.innerHTML=`<div class="empty-state" style="padding-top:80px">
-      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="opacity:.25"><rect x="6" y="8" width="28" height="26" rx="3"/><line x1="13" y1="16" x2="27" y2="16"/><line x1="13" y1="22" x2="22" y2="22"/></svg>
-      <span>아이템이 없습니다</span>
-    </div>`;return;
-  }
-
-  // Group by category
+  if(!items.length){scroll.innerHTML='<div class="empty-state"><span>아이템이 없습니다</span></div>';return;}
   const grouped={};
-  items.forEach(item=>{
-    if(!grouped[item.cId]) grouped[item.cId]=[];
-    grouped[item.cId].push(item);
-  });
-
-  let html='';
-  Object.keys(grouped).forEach(cId=>{
+  items.forEach(item=>{if(!grouped[item.cId])grouped[item.cId]=[];grouped[item.cId].push(item);});
+  scroll.innerHTML=Object.keys(grouped).map(cId=>{
     const cat=DB.cats.find(c=>c.id===cId);
     const catItems=grouped[cId];
     const catDmg=catItems.reduce((s,i)=>s+(i.D||0),0);
     const catTotal=catItems.reduce((s,i)=>s+itemTotal(i),0);
-    html+=`<div class="dash-section">
+    return `<div class="dash-section">
       <div class="dash-sec-hdr">
         <span class="dash-sec-icon">${cat?.icon||'📦'}</span>
         <span class="dash-sec-name">${cat?.name||cId}</span>
         <span class="dash-sec-cnt">${catItems.length}종 · 총 ${catTotal}개</span>
         ${catDmg?`<span class="dash-sec-dmg">⚠ 파손 ${catDmg}</span>`:''}
       </div>
-      <div class="dash-rows">
-        ${catItems.map(item=>dashRow(item)).join('')}
-      </div>
+      <div class="dash-rows">${catItems.map(item=>dashRow(item)).join('')}</div>
     </div>`;
+  }).join('');
+  scroll.querySelectorAll('.dash-row').forEach(row=>{
+    row.addEventListener('click',()=>openDetail(row.dataset.id));
   });
-  scroll.innerHTML=html;
 }
 
 function dashRow(item){
@@ -751,18 +602,14 @@ function dashRow(item){
   const st=hasDmg?'dmg':((item.C||0)>0||(item.B||0)>2)?'warn':'ok';
   const stLbl={ok:'정상',warn:'주의',dmg:'파손있음'}[st];
   const thumb=driveThumb(item.driveUrl);
-  const thumbHtml=thumb
-    ?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:22px;width:44px;height:44px;align-items:center;justify-content:center">${catIcon(item.cId)}</span>`
-    :`<span style="font-size:22px">${catIcon(item.cId)}</span>`;
-
-  const gradesBadges=GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
+  const thumbHtml=thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:22px;display:flex;align-items:center;justify-content:center;width:52px;height:52px">${catIcon(item.cId)}</span>`:`<span style="font-size:22px">${catIcon(item.cId)}</span>`;
+  const grades=GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
     const cls=['gS','gA','gB','gC'].includes(g.cls)?g.cls:'';
-    const sty=cls?'':`background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)`;
-    return `<span class="gb ${cls}" ${sty?`style="${sty}"`:''}>　${g.name.split('(')[0].trim()} ${item[g.key]}</span>`;
+    const sty=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
+    return `<span class="gb ${cls}" ${sty}>${g.name.split('(')[0].trim()} ${item[g.key]}</span>`;
   }).join('');
   const dmgBadge=hasDmg?`<span class="gb gD">⚠ ${item.D}</span>`:'';
-
-  return `<div class="dash-row${hasDmg?' has-dmg':''}" onclick="openDetail('${item.id}')">
+  return `<div class="dash-row${hasDmg?' has-dmg':''}" data-id="${item.id}">
     <div class="dr-thumb">${thumbHtml}</div>
     <div class="dr-info">
       <div class="dr-name">${item.name}</div>
@@ -770,251 +617,178 @@ function dashRow(item){
         ${item.loc?`<div class="dr-loc"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${item.loc}</div>`:''}
         ${item.note?`<div class="dr-note">${item.note}</div>`:''}
       </div>
-      <div class="dr-grades">${gradesBadges}${dmgBadge}${!tot&&!hasDmg?`<span style="font-size:12px;color:var(--text3)">수량 없음</span>`:''}</div>
+      <div class="dr-grades">${grades}${dmgBadge}${!tot&&!hasDmg?`<span style="font-size:12px;color:var(--text3)">수량 없음</span>`:''}</div>
     </div>
-    <div class="dr-total-block">
-      <div class="dr-total-num">${tot}</div>
-      <div class="dr-total-lbl">총 수량</div>
-    </div>
-    <div class="dr-status">
-      <span class="st-badge st-${st}"><span class="st-dot"></span>${stLbl}</span>
-    </div>
+    <div class="dr-total-block"><div class="dr-total-num">${tot}</div><div class="dr-total-lbl">총 수량</div></div>
+    <div class="dr-status"><span class="st-badge st-${st}"><span class="st-dot"></span>${stLbl}</span></div>
     <svg class="dr-chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5,2 10,7 5,12"/></svg>
   </div>`;
 }
 
-// ═══════════════════════════════════════════
-//  DETAIL VIEW
-// ═══════════════════════════════════════════
-function openDetail(id){
-  const item=DB.items.find(i=>i.id===id);if(!item) return;
-  detItemId=id; detDriveVal=null;
-  renderDetail(item);
-  showView('det');
-  renderBreadcrumb();
-}
+function updateDmgChip(){document.getElementById('dmgCount').textContent=DB.items.reduce((s,i)=>s+(i.D||0),0);}
+function renderAll(){renderSidebar();renderDash();updateDmgChip();}
 
+// ═══════════════════════════════════
+//  DETAIL
+// ═══════════════════════════════════
+function openDetail(id){
+  const item=DB.items.find(i=>i.id===id);if(!item)return;
+  detItemId=id;detDriveVal=null;
+  renderDetail(item);showView('det');renderBreadcrumb();
+}
 function renderDetail(item){
-  // HEAD
   const thumb=driveThumb(item.driveUrl);
-  const imgHtml=thumb
-    ?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:32px">${catIcon(item.cId)}</span>`
-    :`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
-  const head=document.getElementById('detHead');
-  head.innerHTML=`
+  const imgHtml=thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:32px">${catIcon(item.cId)}</span>`:`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
+  document.getElementById('detHead').innerHTML=`
     <div class="det-img">${imgHtml}</div>
     <div class="det-titles">
       <div class="det-name">${item.name}</div>
       <div class="det-path">${catPath(item)}</div>
       <div class="det-tags">
-        ${item.loc?`<div class="det-tag"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${item.loc}</div>`:''}
+        ${item.loc?`<div class="det-tag">${item.loc}</div>`:''}
         ${item.note?`<div class="det-tag">${item.note}</div>`:''}
-        <div class="det-tag" style="background:rgba(75,140,240,.1);border-color:rgba(75,140,240,.2);color:var(--bg-g)">총 ${itemTotal(item)}개</div>
-        ${(item.D||0)>0?`<div class="det-tag" style="background:rgba(222,72,72,.1);border-color:rgba(222,72,72,.2);color:var(--red)">⚠ 파손 ${item.D}</div>`:''}
+        <div class="det-tag" style="color:var(--bg-g)">총 ${itemTotal(item)}개</div>
+        ${(item.D||0)>0?`<div class="det-tag" style="color:var(--red)">⚠ 파손 ${item.D}</div>`:''}
       </div>
     </div>
     <div class="det-actions">
-      <button class="btn sm" onclick="editFullItem('${item.id}')">
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8.5l1-3L9 1l2 2L4.5 9.5l-2.5 1z"/></svg>
-        전체 편집
-      </button>
-      <button class="btn sm" style="color:var(--red);border-color:rgba(222,72,72,.3)" onclick="askDel('${item.id}')">
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,3 10,3"/><path d="M4 3V2h4v1"/><path d="M2.5 3l.6 7h5.8l.6-7"/></svg>
-        삭제
-      </button>
+      <button class="btn sm" id="btnEditFull">전체 편집</button>
+      <button class="btn sm" id="btnDelItem" style="color:var(--red);border-color:rgba(224,80,80,.3)">삭제</button>
     </div>`;
-
-  // BODY
+  document.getElementById('btnEditFull')?.addEventListener('click',()=>editFullItem(item.id));
+  document.getElementById('btnDelItem')?.addEventListener('click',()=>askDel(item.id));
   const gradeRows=GRADES.map(g=>{
     const cls=['gS','gA','gB','gC','gD'].includes(g.cls)?g.cls:'';
-    const badgeStyle=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
+    const sty=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
     return `<div class="grade-bar-row">
-      <div class="gb-lbl">
-        <span class="gb ${cls}" ${badgeStyle}>${g.name.split('(')[0].trim()}</span>
-        <span class="gb-lbl-txt" style="font-size:10px;color:var(--text3)">${g.name}</span>
-      </div>
+      <div class="gb-lbl"><span class="gb ${cls}" ${sty}>${g.name.split('(')[0].trim()}</span><span class="gb-lbl-txt">${g.name}</span></div>
       <div class="gb-sp"></div>
       <div class="qc">
-        <button class="qbtn" onclick="adjDetGrade('${g.key}',-1)">−</button>
+        <button class="qbtn det-minus" data-k="${g.key}">−</button>
         <div class="qnum" id="dG_${g.key}">${item[g.key]||0}</div>
-        <button class="qbtn" onclick="adjDetGrade('${g.key}',1)">+</button>
+        <button class="qbtn det-plus" data-k="${g.key}">+</button>
       </div>
     </div>`;
   }).join('');
-
-  const openDriveBtn=item.driveUrl
-    ?`<button class="btn sm" onclick="window.open('${item.driveUrl}','_blank')"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" width="11" height="11"><path d="M4 2H2a1 1 0 00-1 1v7a1 1 0 001 1h8a1 1 0 001-1V7"/><path d="M8 1h3v3M11 1L5 7"/></svg>열기</button>`:'';
-
+  const openDriveBtn=item.driveUrl?`<button class="btn sm" id="btnOpenDrive">열기</button>`:'';
   document.getElementById('detScroll').innerHTML=`
-    <div class="det-sec">
-      <div class="det-sec-t">등급별 수량 편집</div>
-      <div class="grade-bars">${gradeRows}</div>
-    </div>
+    <div class="det-sec"><div class="det-sec-t">등급별 수량 편집</div><div class="grade-bars">${gradeRows}</div></div>
     <div class="det-sec">
       <div class="det-sec-t">위치 / 메모</div>
       <div class="det-field-row">
-        <div class="det-field">
-          <div class="det-field-lbl">위치</div>
-          <input class="det-input" id="dLoc" value="${item.loc||''}" placeholder="예: 창고 선반 A-2">
-        </div>
-        <div class="det-field">
-          <div class="det-field-lbl">메모</div>
-          <input class="det-input" id="dNote" value="${item.note||''}" placeholder="스펙, 특이사항 등">
-        </div>
+        <div class="det-field"><div class="det-field-lbl">위치</div><input class="det-input" id="dLoc" value="${item.loc||''}" placeholder="예: 창고 선반 A-2"></div>
+        <div class="det-field"><div class="det-field-lbl">메모</div><input class="det-input" id="dNote" value="${item.note||''}" placeholder="스펙, 특이사항 등"></div>
       </div>
     </div>
     <div class="det-sec">
       <div class="det-sec-t">사진</div>
-      <div class="det-img-zone" onclick="document.getElementById('dImgFile').click()" id="dImgZone">
-        <input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()">
-        ${thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none'">`:`<div class="iz-lbl">클릭하여 사진 추가</div>`}
-      </div>
-      <div class="drive-row" style="margin-top:8px">
-        <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="구글 드라이브 공유 링크" oninput="detDriveVal=this.value;refreshDetImg()">
+      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="">`:'<div class="iz-lbl">클릭하여 사진 추가</div>'}</div>
+      <div class="drive-row">
+        <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="구글 드라이브 공유 링크">
         ${openDriveBtn}
       </div>
       <div class="drive-hint">구글 드라이브 파일을 '링크 있는 모든 사용자'로 공유 후 링크 붙여넣기</div>
     </div>`;
+  document.querySelectorAll('.det-minus').forEach(btn=>{btn.addEventListener('click',()=>adjGrade(btn.dataset.k,-1));});
+  document.querySelectorAll('.det-plus').forEach(btn=>{btn.addEventListener('click',()=>adjGrade(btn.dataset.k,1));});
+  document.getElementById('dDrive')?.addEventListener('input',e=>{detDriveVal=e.target.value;refreshDetImg();});
+  document.getElementById('dImgZone')?.addEventListener('click',()=>{
+    const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+    inp.onchange=e=>{
+      const f=e.target.files[0];if(!f)return;
+      const r=new FileReader();r.onload=ev=>{
+        detDriveVal=null;
+        document.getElementById('dImgZone').innerHTML=`<img src="${ev.target.result}">`;
+      };r.readAsDataURL(f);
+    };inp.click();
+  });
+  document.getElementById('btnOpenDrive')?.addEventListener('click',()=>window.open(item.driveUrl,'_blank'));
 }
-
-function adjDetGrade(k,d){
-  const item=DB.items.find(i=>i.id===detItemId);if(!item) return;
+function adjGrade(k,d){
+  const item=DB.items.find(i=>i.id===detItemId);if(!item)return;
   item[k]=Math.max(0,(item[k]||0)+d);
   document.getElementById('dG_'+k).textContent=item[k];
-  saveItemToFB(item);
-  renderDash();updateDmgChip();
-  // refresh head tags
-  const item2=DB.items.find(i=>i.id===detItemId);
-  if(item2) renderDetail(item2);
+  saveItemToFB(item);renderDash();updateDmgChip();
 }
-
-function prevDetImg(e){
-  const f=e.target.files[0];if(!f) return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    const item=DB.items.find(i=>i.id===detItemId);
-    if(!item) return;
-    item.driveUrl=''; // local override
-    const zone=document.getElementById('dImgZone');
-    if(zone) zone.innerHTML=`<input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()"><img src="${ev.target.result}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px">`;
-    // store temp
-    detDriveVal=ev.target.result; // store local url for save
-    const driveInp=document.getElementById('dDrive');
-    if(driveInp) driveInp.value='';
-  };
-  r.readAsDataURL(f);
-}
-
 function refreshDetImg(){
   const url=document.getElementById('dDrive')?.value||'';
-  const thumb=driveThumb(url);
-  const zone=document.getElementById('dImgZone');
-  if(!zone) return;
-  if(thumb){
-    zone.innerHTML=`<input type="file" id="dImgFile" accept="image/*" onchange="prevDetImg(event)" style="display:none" onclick="event.stopPropagation()"><img src="${thumb}" alt="" onerror="this.style.display='none'">`;
-  }
+  const t=driveThumb(url);
+  if(t)document.getElementById('dImgZone').innerHTML=`<img src="${t}" alt="">`;
 }
-
 function saveDetail(){
-  const item=DB.items.find(i=>i.id===detItemId);if(!item) return;
-  const loc=document.getElementById('dLoc');
-  const note=document.getElementById('dNote');
-  const drive=document.getElementById('dDrive');
-  if(loc) item.loc=loc.value.trim();
-  if(note) item.note=note.value.trim();
-  if(drive) item.driveUrl=drive.value.trim();
-  if(detDriveVal&&!item.driveUrl) item.driveUrl=detDriveVal;
-  saveItemToFB(item);
-  renderDetail(item);
-  renderBreadcrumb();
-  toast('저장되었습니다 ✓');
+  const item=DB.items.find(i=>i.id===detItemId);if(!item)return;
+  item.loc=document.getElementById('dLoc')?.value.trim()||'';
+  item.note=document.getElementById('dNote')?.value.trim()||'';
+  item.driveUrl=document.getElementById('dDrive')?.value.trim()||'';
+  saveItemToFB(item);renderDetail(item);renderBreadcrumb();toast('저장되었습니다 ✓');
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════
 //  DAMAGE FILTER
-// ═══════════════════════════════════════════
-function updateDmgChip(){
-  document.getElementById('dmgCount').textContent=DB.items.reduce((s,i)=>s+(i.D||0),0);
-}
+// ═══════════════════════════════════
 function toggleDmgFilter(){
-  dmgFilter=!dmgFilter;
-  selCatId=null;selSubId=null;
-  const chip=document.getElementById('dmgChip');
-  chip.style.background=dmgFilter?'rgba(222,72,72,.22)':'rgba(222,72,72,.08)';
-  chip.style.borderColor=dmgFilter?'rgba(222,72,72,.5)':'rgba(222,72,72,.25)';
-  if(curView==='det') goHome(); else {renderSidebar();renderDash();renderBreadcrumb();}
+  dmgFilter=!dmgFilter;selCatId=null;selSubId=null;
+  document.getElementById('dmgChip').classList.toggle('active',dmgFilter);
+  if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}
 }
 
-// ═══════════════════════════════════════════
-//  SEARCH
-// ═══════════════════════════════════════════
-function doSearch(){
-  searchQ=document.getElementById('srchInput').value.trim().toLowerCase();
-  if(curView==='det') goHome(); else {renderSidebar();renderDash();renderBreadcrumb();}
-}
+// ═══════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════
+function openMW(id){document.getElementById(id).classList.add('open');}
+function closeMW(id){document.getElementById(id).classList.remove('open');}
 
-// ═══════════════════════════════════════════
-//  ADD / EDIT ITEM MODAL
-// ═══════════════════════════════════════════
+// ADD/EDIT ITEM
 function openAddModal(){
   editModalId=null;
   document.getElementById('mTitle').textContent='아이템 추가';
   resetMForm();fillFCat();
   if(selCatId){document.getElementById('fCat').value=selCatId;onFCat();}
   if(selSubId){document.getElementById('fSub').value=selSubId;onFSub();}
-  buildGradeInputs(null);
-  openMW('itemMW');
+  buildGradeInputs(null);openMW('itemMW');
 }
 function editFullItem(id){
-  const item=DB.items.find(i=>i.id===id);if(!item) return;
+  const item=DB.items.find(i=>i.id===id);if(!item)return;
   editModalId=id;
   document.getElementById('mTitle').textContent='아이템 수정';
   resetMForm();fillFCat();
   document.getElementById('fCat').value=item.cId;onFCat();
   document.getElementById('fSub').value=item.sId;onFSub();
-  if(item.lId) document.getElementById('fLeaf').value=item.lId;
+  if(item.lId)document.getElementById('fLeaf').value=item.lId;
   document.getElementById('fNm').value=item.name;
   document.getElementById('fLoc').value=item.loc||'';
   document.getElementById('fNote').value=item.note||'';
   document.getElementById('fDrive').value=item.driveUrl||'';
-  buildGradeInputs(item);
-  openMW('itemMW');
+  buildGradeInputs(item);openMW('itemMW');
 }
 function buildGradeInputs(item){
   document.getElementById('mGradeInputs').innerHTML=GRADES.map(g=>{
     const cls=['gS','gA','gB','gC','gD'].includes(g.cls)?g.cls:'';
-    const sty=cls?'':`background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)`;
-    return `<div class="gi-g">
-      <div class="gi-lbl ${cls}" ${sty?`style="${sty}"`:''}>${g.name.split('(')[0].trim()}</div>
-      <input class="gi-f" id="mG_${g.key}" type="number" value="${item?item[g.key]||0:0}" min="0">
-    </div>`;
+    const sty=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
+    return `<div class="gi-g"><div class="gi-lbl ${cls}" ${sty}>${g.name.split('(')[0].trim()}</div><input class="gi-f" id="mG_${g.key}" type="number" value="${item?item[g.key]||0:0}" min="0"></div>`;
   }).join('');
 }
 function resetMForm(){
   ['fNm','fLoc','fNote','fDrive','fNL'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('fCat').value='';
+  document.getElementById('fCat').innerHTML='<option value="">선택</option>';
   document.getElementById('fSub').innerHTML='<option value="">선택</option>';
   document.getElementById('fLeaf').innerHTML='<option value="">없음</option>';
 }
 function fillFCat(){
-  const s=document.getElementById('fCat');const cur=s.value;
-  s.innerHTML='<option value="">선택</option>';
+  const s=document.getElementById('fCat');s.innerHTML='<option value="">선택</option>';
   DB.cats.forEach(c=>s.add(new Option(c.icon+' '+c.name,c.id)));
-  if(cur)s.value=cur;
 }
 function onFCat(){
   const cId=document.getElementById('fCat').value;
-  const ss=document.getElementById('fSub');
-  ss.innerHTML='<option value="">선택</option>';
+  const ss=document.getElementById('fSub');ss.innerHTML='<option value="">선택</option>';
   document.getElementById('fLeaf').innerHTML='<option value="">없음</option>';
-  if(!cId) return;
+  if(!cId)return;
   DB.cats.find(c=>c.id===cId)?.subs.forEach(s=>ss.add(new Option(s.name,s.id)));
 }
 function onFSub(){
   const cId=document.getElementById('fCat').value,sId=document.getElementById('fSub').value;
-  const ls=document.getElementById('fLeaf');
-  ls.innerHTML='<option value="">없음</option>';
-  if(!cId||!sId) return;
+  const ls=document.getElementById('fLeaf');ls.innerHTML='<option value="">없음</option>';
+  if(!cId||!sId)return;
   DB.cats.find(c=>c.id===cId)?.subs.find(s=>s.id===sId)?.leaves.forEach(l=>ls.add(new Option(l.name,l.id)));
 }
 function saveItem(){
@@ -1024,42 +798,28 @@ function saveItem(){
   if(!nm||!cId||!sId){toast('장비명, 대분류, 중분류는 필수입니다',false);return;}
   const nl=document.getElementById('fNL').value.trim();
   let lId=document.getElementById('fLeaf').value||null;
-  if(nl){
-    const cat=DB.cats.find(c=>c.id===cId);
-    const sub=cat?.subs.find(s=>s.id===sId);
-    if(sub){const x={id:'l_'+Date.now(),name:nl};sub.leaves.push(x);lId=x.id;saveCatsToFB();}
-  }
+  if(nl){const cat=DB.cats.find(c=>c.id===cId);const sub=cat?.subs.find(s=>s.id===sId);if(sub){const x={id:'l_'+Date.now(),name:nl};sub.leaves.push(x);lId=x.id;saveCatsToFB();}}
   const grades={};GRADES.forEach(g=>{grades[g.key]=+document.getElementById('mG_'+g.key).value||0;});
-  const d={cId,sId,lId:lId||null,name:nm,loc:document.getElementById('fLoc').value.trim(),
-    note:document.getElementById('fNote').value.trim(),
-    driveUrl:document.getElementById('fDrive').value.trim(),...grades};
+  const d={cId,sId,lId:lId||null,name:nm,loc:document.getElementById('fLoc').value.trim(),note:document.getElementById('fNote').value.trim(),driveUrl:document.getElementById('fDrive').value.trim(),...grades};
   if(editModalId){
-    const item={...DB.items.find(i=>i.id===editModalId),...d};
-    saveItemToFB(item);
-    toast('수정되었습니다 ✓');
-    if(detItemId===editModalId){
-      setTimeout(()=>{const updated=DB.items.find(i=>i.id===editModalId);if(updated)renderDetail(updated);},300);
-    }
-  } else {
-    const newItem={id:'i_'+Date.now(),...d};
-    saveItemToFB(newItem);
-    toast('추가되었습니다 ✓');
-  }
+    saveItemToFB({...DB.items.find(i=>i.id===editModalId),...d});toast('수정되었습니다 ✓');
+    if(detItemId===editModalId)setTimeout(()=>{const it=DB.items.find(i=>i.id===editModalId);if(it)renderDetail(it);},300);
+  } else {saveItemToFB({id:'i_'+Date.now(),...d});toast('추가되었습니다 ✓');}
   closeMW('itemMW');
 }
 
-// ═══════════════════════════════════════════
-//  CATEGORY MODAL
-// ═══════════════════════════════════════════
-function openAddMajorCat(){document.getElementById('cNm').value='';document.getElementById('cIco').value='';document.getElementById('cType').value='major';onCType();openMW('catMW');}
-function openAddCatModal(){document.getElementById('cNm').value='';document.getElementById('cIco').value='';document.getElementById('cType').value='major';onCType();openMW('catMW');}
+// CAT MODAL
+function openAddCatModal(){
+  document.getElementById('cNm').value='';document.getElementById('cIco').value='';
+  document.getElementById('cType').value='major';onCType();openMW('catMW');
+}
 function onCType(){
   const t=document.getElementById('cType').value;
   document.getElementById('cPG').style.display=t==='major'?'none':'block';
   document.getElementById('cGG').style.display=t==='leaf'?'block':'none';
   document.getElementById('cIG').style.display=t==='major'?'block':'none';
   if(t!=='major'){const s=document.getElementById('cPar');s.innerHTML='';DB.cats.forEach(c=>s.add(new Option(c.icon+' '+c.name,c.id)));}
-  if(t==='leaf') onCPar();
+  if(t==='leaf')onCPar();
 }
 function onCPar(){
   const cId=document.getElementById('cPar').value||DB.cats[0]?.id;
@@ -1069,88 +829,103 @@ function onCPar(){
 function saveCat(){
   const t=document.getElementById('cType').value,nm=document.getElementById('cNm').value.trim();
   if(!nm){toast('분류명을 입력하세요',false);return;}
-  if(t==='major') DB.cats.push({id:'c_'+Date.now(),name:nm,icon:document.getElementById('cIco').value.trim()||'📦',subs:[]});
-  else if(t==='sub') DB.cats.find(c=>c.id===document.getElementById('cPar').value)?.subs.push({id:'s_'+Date.now(),name:nm,leaves:[]});
+  if(t==='major')DB.cats.push({id:'c_'+Date.now(),name:nm,icon:document.getElementById('cIco').value.trim()||'📦',subs:[]});
+  else if(t==='sub')DB.cats.find(c=>c.id===document.getElementById('cPar').value)?.subs.push({id:'s_'+Date.now(),name:nm,leaves:[]});
   else{const cat=DB.cats.find(c=>c.id===document.getElementById('cPar').value);cat?.subs.find(s=>s.id===document.getElementById('cGrand').value)?.leaves.push({id:'l_'+Date.now(),name:nm});}
-  saveCatsToFB();
-  closeMW('catMW');renderAll();toast(nm+' 추가됨 ✓');
+  saveCatsToFB();closeMW('catMW');renderAll();toast(nm+' 추가됨 ✓');
 }
 
-// ═══════════════════════════════════════════
-//  GRADE SETTINGS
-// ═══════════════════════════════════════════
-function openSettings(){renderGS();openMW('settingsMW');}
-function renderGS(){
+// GRADE SETTINGS
+function openSettings(){
   document.getElementById('gsBody').innerHTML=GRADES.map((g,i)=>`
-    <div class="gsr" id="gsr_${g.key}">
+    <div class="gsr">
       <div class="gsr-sw" style="background:${gradeColor(i)}"></div>
-      <input class="gsr-inp" id="gs_${g.key}" value="${g.name}" placeholder="등급명">
-      ${g.key==='D'?`<div style="width:20px"></div>`:`<button class="gsr-del" onclick="rmGrade('${g.key}')">×</button>`}
+      <input class="gsr-inp" data-key="${g.key}" value="${g.name}" placeholder="등급명">
+      ${g.key==='D'?'<div style="width:20px"></div>':`<button class="gsr-del" data-key="${g.key}">×</button>`}
     </div>`).join('');
+  document.querySelectorAll('.gsr-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{if(btn.dataset.key!=='D'){GRADES=GRADES.filter(g=>g.key!==btn.dataset.key);openSettings();}});
+  });
+  openMW('settingsMW');
 }
 function addGradeRow(){
   const k='G'+Date.now().toString(36).slice(-4).toUpperCase();
   const dIdx=GRADES.findIndex(g=>g.key==='D');
   GRADES.splice(dIdx,0,{key:k,name:'새 등급',cls:'gX'+k});
   DB.items.forEach(it=>{if(it[k]===undefined)it[k]=0;});
-  renderGS();
-  setTimeout(()=>{const el=document.getElementById('gs_'+k);if(el){el.select();}},50);
+  openSettings();
+  setTimeout(()=>{const inp=document.querySelector(`.gsr-inp[data-key="${k}"]`);if(inp)inp.select();},50);
 }
-function rmGrade(key){if(key==='D')return;GRADES=GRADES.filter(g=>g.key!==key);renderGS();}
 function saveGradeNames(){
-  GRADES.forEach((g,i)=>{const el=document.getElementById('gs_'+g.key);if(el&&el.value.trim())g.name=el.value.trim();g.color=gradeColor(i);});
-  saveGradesToFB();
-  closeMW('settingsMW');renderAll();toast('등급 설정 저장됨 ✓');
+  document.querySelectorAll('.gsr-inp').forEach((inp,i)=>{
+    const g=GRADES.find(x=>x.key===inp.dataset.key);
+    if(g&&inp.value.trim())g.name=inp.value.trim();
+  });
+  saveGradesToFB();closeMW('settingsMW');renderAll();toast('등급 설정 저장됨 ✓');
 }
 
-// ═══════════════════════════════════════════
-//  DELETE
-// ═══════════════════════════════════════════
-let confCb=null;
+// DELETE
 function askDel(id){
   const item=DB.items.find(i=>i.id===id);
   document.getElementById('confT').textContent='아이템 삭제';
   document.getElementById('confD').textContent=`"${item?.name}"을(를) 삭제하시겠습니까?`;
-  confCb=()=>{
-    deleteItemFromFB(id);
-    if(curView==='det') goHome();
-    toast('삭제되었습니다');
-  };
+  confCb=()=>{deleteItemFromFB(id);if(curView==='det')goHome();toast('삭제되었습니다');};
   document.getElementById('confW').classList.add('open');
 }
-function askDelSub(catId, subId){
-  const cat=DB.cats.find(c=>c.id===catId);
-  const sub=cat?.subs.find(s=>s.id===subId);
-  const itemCnt=DB.items.filter(i=>i.cId===catId&&i.sId===subId).length;
+function askDelSub(catId,subId){
+  const cat=DB.cats.find(c=>c.id===catId);const sub=cat?.subs.find(s=>s.id===subId);
+  const cnt=DB.items.filter(i=>i.cId===catId&&i.sId===subId).length;
   document.getElementById('confT').textContent='중분류 삭제';
-  document.getElementById('confD').textContent=`"${sub?.name}" 중분류를 삭제하시겠습니까?${itemCnt>0?`\n\n⚠ 이 중분류에 속한 아이템 ${itemCnt}개도 함께 삭제됩니다.`:''}`;
+  document.getElementById('confD').textContent=`"${sub?.name}" 중분류를 삭제하시겠습니까?${cnt>0?`\n\n⚠ 이 중분류에 속한 아이템 ${cnt}개도 함께 삭제됩니다.`:''}`;
   confCb=()=>{
-    if(cat) cat.subs=cat.subs.filter(s=>s.id!==subId);
+    if(cat)cat.subs=cat.subs.filter(s=>s.id!==subId);
     saveCatsToFB();
-    // 해당 중분류 아이템 전부 삭제
     DB.items.filter(i=>i.cId===catId&&i.sId===subId).forEach(i=>deleteItemFromFB(i.id));
-    if(selSubId===subId){selSubId=null;}
-    if(curView==='det'){const det=DB.items.find(i=>i.id===detItemId);if(!det)goHome();}
-    renderAll();
-    toast(`"${sub?.name}" 삭제됨`);
+    if(selSubId===subId)selSubId=null;
+    if(curView==='det'){const d=DB.items.find(i=>i.id===detItemId);if(!d)goHome();}
+    renderAll();toast(`"${sub?.name}" 삭제됨`);
   };
   document.getElementById('confW').classList.add('open');
 }
-function doConf(){if(confCb)confCb();closeConf();}
-function closeConf(){document.getElementById('confW').classList.remove('open');confCb=null;}
 
-// ═══════════════════════════════════════════
-//  RENDER ALL
-// ═══════════════════════════════════════════
-function renderAll(){renderSidebar();renderDash();updateDmgChip();}
+// ═══════════════════════════════════
+//  INIT — DOM 완성 후 실행
+// ═══════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // 버튼 이벤트
+  document.getElementById('btnSettings').addEventListener('click',openSettings);
+  document.getElementById('dmgChip').addEventListener('click',toggleDmgFilter);
+  document.getElementById('btnAddCat').addEventListener('click',openAddCatModal);
+  document.getElementById('btnGoHome').addEventListener('click',goHome);
+  document.getElementById('btnSaveDet').addEventListener('click',saveDetail);
+  document.getElementById('srchInput').addEventListener('input',e=>{searchQ=e.target.value.trim().toLowerCase();if(curView==='det')goHome();else{renderSidebar();renderDash();renderBreadcrumb();}});
+  // item modal
+  document.getElementById('btnCloseItemMW').addEventListener('click',()=>closeMW('itemMW'));
+  document.getElementById('btnCancelItem').addEventListener('click',()=>closeMW('itemMW'));
+  document.getElementById('btnSaveItem').addEventListener('click',saveItem);
+  document.getElementById('fCat').addEventListener('change',onFCat);
+  document.getElementById('fSub').addEventListener('change',onFSub);
+  // cat modal
+  document.getElementById('btnCloseCatMW').addEventListener('click',()=>closeMW('catMW'));
+  document.getElementById('btnCancelCat').addEventListener('click',()=>closeMW('catMW'));
+  document.getElementById('btnSaveCat').addEventListener('click',saveCat);
+  document.getElementById('cType').addEventListener('change',onCType);
+  document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
+  // settings modal
+  document.getElementById('btnCloseSettingsMW').addEventListener('click',()=>closeMW('settingsMW'));
+  document.getElementById('btnCancelSettings').addEventListener('click',()=>closeMW('settingsMW'));
+  document.getElementById('btnSaveGrades').addEventListener('click',saveGradeNames);
+  document.getElementById('btnAddGrade').addEventListener('click',addGradeRow);
+  // confirm
+  document.getElementById('btnCancelConf').addEventListener('click',()=>{document.getElementById('confW').classList.remove('open');confCb=null;});
+  document.getElementById('btnDoConf').addEventListener('click',()=>{if(confCb)confCb();document.getElementById('confW').classList.remove('open');confCb=null;});
+  // overlay close
+  ['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
+  document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('confW').classList.remove('open');confCb=null;}});
 
-// Modal overlay close
-['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
-document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConf();});
-document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
-
-// Firebase 연결 시작
-initFirebase();
+  // Firebase 시작
+  initFirebase();
+});
 </script>
 </body>
 </html>
