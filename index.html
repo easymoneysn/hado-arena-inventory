@@ -88,8 +88,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .dash-row{display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
 .dash-row:hover{background:var(--bg3);border-color:var(--border3);transform:translateX(3px)}
 .dash-row.has-dmg{border-left:3px solid var(--red);padding-left:16px}
-.dr-thumb{width:52px;height:52px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)}
-.dr-thumb img{width:100%;height:100%;object-fit:contain;border-radius:10px;padding:2px}
+.dr-thumb{width:80px;height:80px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;border:1px solid var(--border2)}
+.dr-thumb img{width:100%;height:100%;object-fit:contain;border-radius:10px;background:var(--bg4)}
 .dr-info{flex:1;min-width:0}
 .dr-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dr-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
@@ -610,8 +610,10 @@ function dashRow(item){
   const hasDmg=(item.D||0)>0;
   const st=hasDmg?'dmg':((item.C||0)>0||(item.B||0)>2)?'warn':'ok';
   const stLbl={ok:'정상',warn:'주의',dmg:'파손있음'}[st];
-  const thumb=driveThumb(item.driveUrl);
-  const thumbHtml=thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:22px;display:flex;align-items:center;justify-content:center;width:52px;height:52px">${catIcon(item.cId)}</span>`:`<span style="font-size:22px">${catIcon(item.cId)}</span>`;
+  const imgSrc = getImgSrc(item.driveUrl);
+  const thumbHtml = imgSrc
+    ? `<img src="${imgSrc}" alt="">`
+    : `<span style="font-size:22px">${catIcon(item.cId)}</span>`;
   const grades=GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
     const cls=['gS','gA','gB','gC'].includes(g.cls)?g.cls:'';
     const sty=cls?'':`style="background:rgba(100,180,255,.1);color:#7ec8ff;border:1px solid rgba(100,180,255,.2)"`;
@@ -646,8 +648,10 @@ function openDetail(id){
   renderDetail(item);showView('det');renderBreadcrumb();
 }
 function renderDetail(item){
-  const thumb=driveThumb(item.driveUrl);
-  const imgHtml=thumb?`<img src="${thumb}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:32px">${catIcon(item.cId)}</span>`:`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
+  const thumb=getImgSrc(item.driveUrl);
+  const imgHtml=thumb
+    ?`<img src="${thumb}" alt="">`
+    :`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
   document.getElementById('detHead').innerHTML=`
     <div class="det-img">${imgHtml}</div>
     <div class="det-titles">
@@ -691,7 +695,7 @@ function renderDetail(item){
     </div>
     <div class="det-sec">
       <div class="det-sec-t">사진</div>
-      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="">`:'<div class="iz-lbl">클릭하여 사진 업로드 또는 아래에 링크/Base64 입력</div>'}</div>
+      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="" style="width:100%;max-height:220px;object-fit:contain;border-radius:8px">`:'<div class="iz-lbl">클릭하여 사진 업로드 또는 아래에 링크/Base64 입력</div>'}</div>
       <div class="drive-row">
         <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="Base64 코드 또는 구글 드라이브 링크 붙여넣기">
         ${openDriveBtn}
