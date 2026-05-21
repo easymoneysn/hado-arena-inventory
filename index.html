@@ -438,7 +438,6 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getDatabase(fbApp);
 
-// Firebase 저장 헬퍼
 function fbSet(path, data){ return set(ref(db, path), data); }
 function fbRemove(path){ return remove(ref(db, path)); }
 function fbUpdate(path, data){ return update(ref(db, path), data); }
@@ -1157,6 +1156,20 @@ function renderAll(){renderSidebar();renderDash();updateDmgChip();}
 ['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
 document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConf();});
 document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
+
+// ── window에 전역 함수 등록 (onclick에서 접근하기 위해 필수) ──
+Object.assign(window, {
+  toggleDmgFilter, openSettings, doSearch, goHome,
+  openAddModal, openAddCatModal, openAddMajorCat,
+  saveDetail, saveItem, saveCat, saveGradeNames, addGradeRow, rmGrade,
+  onFCat, onFSub, onCType, onCPar,
+  selectCat, selectSub, openDetail, editFullItem,
+  adjDetGrade, prevDetImg, refreshDetImg,
+  askDel, askDelSub, doConf, closeConf,
+  closeMW, openMW,
+  buildGradeInputs, renderGS, openSettings,
+  prevMImg,
+});
 
 // Firebase 연결 시작
 initFirebase();
