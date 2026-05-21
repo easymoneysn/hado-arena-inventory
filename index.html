@@ -82,6 +82,15 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .ns-dot.active{background:var(--accent)}
 .ns-name{font-size:12px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ns-cnt{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace}
+.ns-del-btn{
+  display:none;width:18px;height:18px;border-radius:4px;
+  border:none;background:rgba(224,80,80,.15);color:var(--red);
+  cursor:pointer;font-size:14px;line-height:1;
+  align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .12s;padding:0;font-family:inherit
+}
+.ns-del-btn:hover{background:rgba(224,80,80,.3)}
+.nav-sub:hover .ns-del-btn{display:flex}
 .sb-footer{padding:10px 12px;border-top:1px solid var(--border2);display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 .sb-add{width:100%;padding:8px;background:transparent;border:1px dashed var(--border2);border-radius:8px;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s}
 .sb-add:hover{background:var(--bg3);color:var(--text2);border-color:var(--accent)}
@@ -409,7 +418,31 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
-<script>
+<script type="module">
+// ═══════════════════════════════════════════
+//  FIREBASE INIT
+// ═══════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB_s7fPr6dcXnHDdPyvecutERvAOjRYRqg",
+  authDomain: "hado-arena-storage.firebaseapp.com",
+  databaseURL: "https://hado-arena-storage-default-rtdb.firebaseio.com",
+  projectId: "hado-arena-storage",
+  storageBucket: "hado-arena-storage.firebasestorage.app",
+  messagingSenderId: "664691174215",
+  appId: "1:664691174215:web:fda726164c7f3ca307fa62"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+// Firebase 저장 헬퍼
+function fbSet(path, data){ return set(ref(db, path), data); }
+function fbRemove(path){ return remove(ref(db, path)); }
+function fbUpdate(path, data){ return update(ref(db, path), data); }
+
 // ═══════════════════════════════════════════
 //  GRADES
 // ═══════════════════════════════════════════
@@ -424,39 +457,114 @@ const SWATCH=['#a85ef5','#2ec47e','#4b8cf0','#e8b930','#de4848','#ff8c42','#00c4
 function gradeColor(i){return SWATCH[i%SWATCH.length];}
 
 // ═══════════════════════════════════════════
-//  DATA
+//  DATA (Firebase Realtime DB)
 // ═══════════════════════════════════════════
-let DB={
-  cats:[
-    {id:'c1',name:'인터넷 연결',icon:'🌐',subs:[
-      {id:'s1',name:'LAN 케이블',leaves:[{id:'l1',name:'CAT.6'},{id:'l2',name:'CAT.7'},{id:'l3',name:'패치 케이블'}]},
-      {id:'s2',name:'공유기 / 허브',leaves:[]},
-    ]},
-    {id:'c2',name:'TV 및 방송 송출',icon:'📺',subs:[
-      {id:'s3',name:'HDMI 케이블',leaves:[{id:'l4',name:'5m'},{id:'l5',name:'10m'},{id:'l6',name:'20m'}]},
-      {id:'s4',name:'캡쳐보드',leaves:[]},
-      {id:'s5',name:'영상 분배기',leaves:[]},
-    ]},
-    {id:'c3',name:'소모 용품',icon:'📦',subs:[
-      {id:'s6',name:'테이프',leaves:[{id:'l7',name:'덕트 테이프'},{id:'l8',name:'케이블 테이프'}]},
-      {id:'s7',name:'케이블 타이',leaves:[{id:'l9',name:'소형'},{id:'l10',name:'대형'}]},
-      {id:'s8',name:'기타 소모품',leaves:[]},
-    ]},
-    {id:'c4',name:'기타 필요 용품',icon:'🔧',subs:[
-      {id:'s9',name:'전원 용품',leaves:[{id:'l11',name:'멀티탭'},{id:'l12',name:'어댑터'}]},
-      {id:'s10',name:'공구 / 기타',leaves:[]},
-    ]},
-  ],
-  items:[
-    {id:'i1',cId:'c1',sId:'s1',lId:'l1',name:'LAN CAT.6 1m',note:'패치용',loc:'창고 선반 A-1',driveUrl:'',S:10,A:8,B:3,C:0,D:2},
-    {id:'i2',cId:'c1',sId:'s1',lId:'l2',name:'LAN CAT.7 3m',note:'',loc:'창고 선반 A-1',driveUrl:'',S:5,A:4,B:1,C:0,D:0},
-    {id:'i3',cId:'c2',sId:'s3',lId:'l5',name:'HDMI 10m',note:'4K@60Hz',loc:'무대 창고',driveUrl:'',S:0,A:4,B:2,C:1,D:1},
-    {id:'i4',cId:'c2',sId:'s3',lId:'l6',name:'HDMI 20m',note:'4K 지원',loc:'무대 창고',driveUrl:'',S:2,A:3,B:1,C:0,D:0},
-    {id:'i5',cId:'c2',sId:'s4',lId:null,name:'Elgato 4K60 Pro',note:'PCIe 슬롯형',loc:'서버실 선반 B',driveUrl:'',S:1,A:2,B:0,C:0,D:0},
-    {id:'i6',cId:'c3',sId:'s6',lId:'l7',name:'덕트 테이프 (흑)',note:'바닥 고정용',loc:'소모품 박스',driveUrl:'',S:20,A:0,B:0,C:0,D:0},
-    {id:'i7',cId:'c3',sId:'s7',lId:'l9',name:'케이블 타이 소형',note:'',loc:'소모품 박스',driveUrl:'',S:50,A:0,B:0,C:0,D:0},
-  ]
-};
+const DEFAULT_CATS = [
+  {id:'c1',name:'인터넷 연결',icon:'🌐',subs:[
+    {id:'s1',name:'LAN 케이블',leaves:[{id:'l1',name:'CAT.6'},{id:'l2',name:'CAT.7'},{id:'l3',name:'패치 케이블'}]},
+    {id:'s2',name:'공유기 / 허브',leaves:[]},
+  ]},
+  {id:'c2',name:'TV 및 방송 송출',icon:'📺',subs:[
+    {id:'s3',name:'HDMI 케이블',leaves:[{id:'l4',name:'5m'},{id:'l5',name:'10m'},{id:'l6',name:'20m'}]},
+    {id:'s4',name:'캡쳐보드',leaves:[]},
+    {id:'s5',name:'영상 분배기',leaves:[]},
+  ]},
+  {id:'c3',name:'소모 용품',icon:'📦',subs:[
+    {id:'s6',name:'테이프',leaves:[{id:'l7',name:'덕트 테이프'},{id:'l8',name:'케이블 테이프'}]},
+    {id:'s7',name:'케이블 타이',leaves:[{id:'l9',name:'소형'},{id:'l10',name:'대형'}]},
+    {id:'s8',name:'기타 소모품',leaves:[]},
+  ]},
+  {id:'c4',name:'기타 필요 용품',icon:'🔧',subs:[
+    {id:'s9',name:'전원 용품',leaves:[{id:'l11',name:'멀티탭'},{id:'l12',name:'어댑터'}]},
+    {id:'s10',name:'공구 / 기타',leaves:[]},
+  ]},
+];
+
+let DB = { cats: [], items: [] };
+
+// 로딩 상태 표시
+function showLoading(on){
+  let el = document.getElementById('loadingOverlay');
+  if(on && !el){
+    el = document.createElement('div');
+    el.id = 'loadingOverlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(13,15,20,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px;';
+    el.innerHTML = `<div style="width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:#4b8cf0;border-radius:50%;animation:spin .7s linear infinite"></div>
+      <div style="font-size:14px;color:#7a83a0">Firebase 연결 중...</div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    document.body.appendChild(el);
+  } else if(!on && el){
+    el.remove();
+  }
+}
+
+// Firebase에서 실시간 데이터 구독
+function initFirebase(){
+  showLoading(true);
+
+  // cats 구독
+  onValue(ref(db,'cats'), snap => {
+    const val = snap.val();
+    if(val){
+      // Firebase 객체 → 배열 변환
+      DB.cats = Object.values(val).map(cat => ({
+        ...cat,
+        subs: cat.subs ? Object.values(cat.subs).map(sub => ({
+          ...sub,
+          leaves: sub.leaves ? Object.values(sub.leaves) : []
+        })) : []
+      }));
+    } else {
+      // 첫 실행 시 기본 데이터 저장
+      DB.cats = DEFAULT_CATS;
+      saveCatsToFB();
+    }
+    renderAll();
+    showLoading(false);
+  });
+
+  // items 구독
+  onValue(ref(db,'items'), snap => {
+    const val = snap.val();
+    DB.items = val ? Object.values(val) : [];
+    renderAll();
+    updateDmgChip();
+  });
+
+  // grades 구독
+  onValue(ref(db,'grades'), snap => {
+    const val = snap.val();
+    if(val) {
+      GRADES = Object.values(val);
+    }
+  });
+}
+
+function saveCatsToFB(){
+  const catsObj = {};
+  DB.cats.forEach(cat => {
+    const subsObj = {};
+    (cat.subs||[]).forEach(sub => {
+      const leavesObj = {};
+      (sub.leaves||[]).forEach(l => { leavesObj[l.id] = l; });
+      subsObj[sub.id] = {...sub, leaves: leavesObj};
+    });
+    catsObj[cat.id] = {...cat, subs: subsObj};
+  });
+  fbSet('cats', catsObj);
+}
+
+function saveItemToFB(item){
+  fbSet('items/'+item.id, item);
+}
+function deleteItemFromFB(id){
+  fbRemove('items/'+id);
+}
+function saveGradesToFB(){
+  const obj = {};
+  GRADES.forEach((g,i) => { obj[i] = g; });
+  fbSet('grades', obj);
+}
 
 // ═══════════════════════════════════════════
 //  STATE
@@ -547,6 +655,7 @@ function renderSidebar(){
             <div class="ns-dot${isSubActive?' active':''}"></div>
             <div class="ns-name">${sub.name}</div>
             <div class="ns-cnt">${cnt}</div>
+            <button class="ns-del-btn" onclick="event.stopPropagation();askDelSub('${cat.id}','${sub.id}')" title="삭제">×</button>
           </div>`;
         }).join('')}
       </div>`;
@@ -781,6 +890,7 @@ function adjDetGrade(k,d){
   const item=DB.items.find(i=>i.id===detItemId);if(!item) return;
   item[k]=Math.max(0,(item[k]||0)+d);
   document.getElementById('dG_'+k).textContent=item[k];
+  saveItemToFB(item);
   renderDash();updateDmgChip();
   // refresh head tags
   const item2=DB.items.find(i=>i.id===detItemId);
@@ -823,7 +933,7 @@ function saveDetail(){
   if(note) item.note=note.value.trim();
   if(drive) item.driveUrl=drive.value.trim();
   if(detDriveVal&&!item.driveUrl) item.driveUrl=detDriveVal;
-  renderAll();
+  saveItemToFB(item);
   renderDetail(item);
   renderBreadcrumb();
   toast('저장되었습니다 ✓');
@@ -926,22 +1036,25 @@ function saveItem(){
   if(nl){
     const cat=DB.cats.find(c=>c.id===cId);
     const sub=cat?.subs.find(s=>s.id===sId);
-    if(sub){const x={id:'l_'+Date.now(),name:nl};sub.leaves.push(x);lId=x.id;}
+    if(sub){const x={id:'l_'+Date.now(),name:nl};sub.leaves.push(x);lId=x.id;saveCatsToFB();}
   }
   const grades={};GRADES.forEach(g=>{grades[g.key]=+document.getElementById('mG_'+g.key).value||0;});
-  const d={cId,sId,lId,name:nm,loc:document.getElementById('fLoc').value.trim(),
+  const d={cId,sId,lId:lId||null,name:nm,loc:document.getElementById('fLoc').value.trim(),
     note:document.getElementById('fNote').value.trim(),
     driveUrl:document.getElementById('fDrive').value.trim(),...grades};
   if(editModalId){
-    const idx=DB.items.findIndex(i=>i.id===editModalId);
-    DB.items[idx]={...DB.items[idx],...d};
+    const item={...DB.items.find(i=>i.id===editModalId),...d};
+    saveItemToFB(item);
     toast('수정되었습니다 ✓');
-    if(detItemId===editModalId) renderDetail(DB.items[idx]);
+    if(detItemId===editModalId){
+      setTimeout(()=>{const updated=DB.items.find(i=>i.id===editModalId);if(updated)renderDetail(updated);},300);
+    }
   } else {
-    DB.items.push({id:'i_'+Date.now(),...d});
+    const newItem={id:'i_'+Date.now(),...d};
+    saveItemToFB(newItem);
     toast('추가되었습니다 ✓');
   }
-  closeMW('itemMW');renderAll();renderBreadcrumb();
+  closeMW('itemMW');
 }
 
 // ═══════════════════════════════════════════
@@ -968,6 +1081,7 @@ function saveCat(){
   if(t==='major') DB.cats.push({id:'c_'+Date.now(),name:nm,icon:document.getElementById('cIco').value.trim()||'📦',subs:[]});
   else if(t==='sub') DB.cats.find(c=>c.id===document.getElementById('cPar').value)?.subs.push({id:'s_'+Date.now(),name:nm,leaves:[]});
   else{const cat=DB.cats.find(c=>c.id===document.getElementById('cPar').value);cat?.subs.find(s=>s.id===document.getElementById('cGrand').value)?.leaves.push({id:'l_'+Date.now(),name:nm});}
+  saveCatsToFB();
   closeMW('catMW');renderAll();toast(nm+' 추가됨 ✓');
 }
 
@@ -994,6 +1108,7 @@ function addGradeRow(){
 function rmGrade(key){if(key==='D')return;GRADES=GRADES.filter(g=>g.key!==key);renderGS();}
 function saveGradeNames(){
   GRADES.forEach((g,i)=>{const el=document.getElementById('gs_'+g.key);if(el&&el.value.trim())g.name=el.value.trim();g.color=gradeColor(i);});
+  saveGradesToFB();
   closeMW('settingsMW');renderAll();toast('등급 설정 저장됨 ✓');
 }
 
@@ -1005,7 +1120,29 @@ function askDel(id){
   const item=DB.items.find(i=>i.id===id);
   document.getElementById('confT').textContent='아이템 삭제';
   document.getElementById('confD').textContent=`"${item?.name}"을(를) 삭제하시겠습니까?`;
-  confCb=()=>{DB.items=DB.items.filter(i=>i.id!==id);if(curView==='det')goHome();renderAll();toast('삭제되었습니다');};
+  confCb=()=>{
+    deleteItemFromFB(id);
+    if(curView==='det') goHome();
+    toast('삭제되었습니다');
+  };
+  document.getElementById('confW').classList.add('open');
+}
+function askDelSub(catId, subId){
+  const cat=DB.cats.find(c=>c.id===catId);
+  const sub=cat?.subs.find(s=>s.id===subId);
+  const itemCnt=DB.items.filter(i=>i.cId===catId&&i.sId===subId).length;
+  document.getElementById('confT').textContent='중분류 삭제';
+  document.getElementById('confD').textContent=`"${sub?.name}" 중분류를 삭제하시겠습니까?${itemCnt>0?`\n\n⚠ 이 중분류에 속한 아이템 ${itemCnt}개도 함께 삭제됩니다.`:''}`;
+  confCb=()=>{
+    if(cat) cat.subs=cat.subs.filter(s=>s.id!==subId);
+    saveCatsToFB();
+    // 해당 중분류 아이템 전부 삭제
+    DB.items.filter(i=>i.cId===catId&&i.sId===subId).forEach(i=>deleteItemFromFB(i.id));
+    if(selSubId===subId){selSubId=null;}
+    if(curView==='det'){const det=DB.items.find(i=>i.id===detItemId);if(!det)goHome();}
+    renderAll();
+    toast(`"${sub?.name}" 삭제됨`);
+  };
   document.getElementById('confW').classList.add('open');
 }
 function doConf(){if(confCb)confCb();closeConf();}
@@ -1021,7 +1158,8 @@ function renderAll(){renderSidebar();renderDash();updateDmgChip();}
 document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConf();});
 document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
 
-renderAll();
+// Firebase 연결 시작
+initFirebase();
 </script>
 </body>
 </html>
