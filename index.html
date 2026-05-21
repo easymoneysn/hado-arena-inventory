@@ -283,7 +283,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       <div class="fg"><div class="fl">위치</div><input class="fi" id="fLoc" placeholder="예: 창고 선반 A-2"></div>
       <div class="fg"><div class="fl">메모</div><input class="fi" id="fNote" placeholder="스펙, 특이사항 등"></div>
     </div>
-    <div class="fg"><div class="fl">구글 드라이브 링크</div><input class="fi" id="fDrive" placeholder="https://drive.google.com/file/d/..."></div>
+    <div class="fg"><div class="fl">사진 (Base64 또는 드라이브 링크)</div><input class="fi" id="fDrive" placeholder="base64-image.de 변환 코드 또는 드라이브 링크"></div>
     <div class="fl" style="margin-bottom:7px">등급별 수량</div>
     <div class="grade-inp-row" id="mGradeInputs"></div>
     <div class="m-foot">
@@ -404,13 +404,22 @@ function catPath(item){
   const l=s?.leaves.find(x=>x.id===item.lId);
   return [c?.name,s?.name,l?.name].filter(Boolean).join(' › ');
 }
-function driveThumb(url){
-  if(!url)return null;
+// Base64, 드라이브 URL, 일반 URL 모두 처리
+function getImgSrc(url){
+  if(!url) return null;
+  // Base64 그대로 반환
+  if(url.startsWith('data:image')) return url;
+  // 구글 드라이브 URL → thumbnail URL
   let m=url.match(/\/file\/d\/([^/?#]+)/);
   let id=m?m[1]:null;
   if(!id){m=url.match(/[?&]id=([^&]+)/);if(m)id=m[1];}
-  return id?`https://drive.google.com/thumbnail?id=${id}&sz=w400`:null;
+  if(id) return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
+  // 일반 URL
+  if(url.startsWith('http')) return url;
+  return null;
 }
+// 하위 호환용
+function driveThumb(url){return getImgSrc(url);}
 function itemTotal(item){return GRADES.filter(g=>g.key!=='D').reduce((s,g)=>s+(item[g.key]||0),0);}
 let tT;
 function toast(msg,ok=true){
@@ -682,24 +691,39 @@ function renderDetail(item){
     </div>
     <div class="det-sec">
       <div class="det-sec-t">사진</div>
-      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="">`:'<div class="iz-lbl">클릭하여 사진 추가</div>'}</div>
+      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="">`:'<div class="iz-lbl">클릭하여 사진 업로드 또는 아래에 링크/Base64 입력</div>'}</div>
       <div class="drive-row">
-        <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="구글 드라이브 공유 링크">
+        <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="Base64 코드 또는 구글 드라이브 링크 붙여넣기">
         ${openDriveBtn}
       </div>
-      <div class="drive-hint">구글 드라이브 파일을 '링크 있는 모든 사용자'로 공유 후 링크 붙여넣기</div>
+      <div class="drive-hint">
+        📎 <strong>사진 추가 방법</strong><br>
+        ① 위 영역 클릭 → 파일 직접 업로드 (Base64로 자동 저장)<br>
+        ② base64-image.de 에서 변환한 Base64 코드 붙여넣기<br>
+        ③ 구글 드라이브 공유 링크 붙여넣기 ('링크 있는 모든 사용자' 설정 필요)
+      </div>
     </div>`;
   document.querySelectorAll('.det-minus').forEach(btn=>{btn.addEventListener('click',()=>adjGrade(btn.dataset.k,-1));});
   document.querySelectorAll('.det-plus').forEach(btn=>{btn.addEventListener('click',()=>adjGrade(btn.dataset.k,1));});
-  document.getElementById('dDrive')?.addEventListener('input',e=>{detDriveVal=e.target.value;refreshDetImg();});
+  document.getElementById('dDrive')?.addEventListener('input',e=>{
+    detDriveVal=e.target.value;
+    const src=getImgSrc(e.target.value);
+    if(src) document.getElementById('dImgZone').innerHTML=`<img src="${src}" alt="">`;
+  });
   document.getElementById('dImgZone')?.addEventListener('click',()=>{
     const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
     inp.onchange=e=>{
       const f=e.target.files[0];if(!f)return;
-      const r=new FileReader();r.onload=ev=>{
-        detDriveVal=null;
-        document.getElementById('dImgZone').innerHTML=`<img src="${ev.target.result}">`;
-      };r.readAsDataURL(f);
+      const r=new FileReader();
+      r.onload=ev=>{
+        const b64=ev.target.result;
+        // Base64를 driveUrl 필드에 저장
+        document.getElementById('dImgZone').innerHTML=`<img src="${b64}">`;
+        const driveInp=document.getElementById('dDrive');
+        if(driveInp) driveInp.value=b64;
+        detDriveVal=b64;
+      };
+      r.readAsDataURL(f);
     };inp.click();
   });
   document.getElementById('btnOpenDrive')?.addEventListener('click',()=>window.open(item.driveUrl,'_blank'));
@@ -719,7 +743,9 @@ function saveDetail(){
   const item=DB.items.find(i=>i.id===detItemId);if(!item)return;
   item.loc=document.getElementById('dLoc')?.value.trim()||'';
   item.note=document.getElementById('dNote')?.value.trim()||'';
-  item.driveUrl=document.getElementById('dDrive')?.value.trim()||'';
+  // dDrive 입력칸 값 우선 (Base64 또는 URL)
+  const driveVal=document.getElementById('dDrive')?.value.trim()||'';
+  item.driveUrl=driveVal;
   saveItemToFB(item);renderDetail(item);renderBreadcrumb();toast('저장되었습니다 ✓');
 }
 
