@@ -418,13 +418,12 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
-<script type="module">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
 // ═══════════════════════════════════════════
 //  FIREBASE INIT
 // ═══════════════════════════════════════════
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyB_s7fPr6dcXnHDdPyvecutERvAOjRYRqg",
   authDomain: "hado-arena-storage.firebaseapp.com",
@@ -435,12 +434,12 @@ const firebaseConfig = {
   appId: "1:664691174215:web:fda726164c7f3ca307fa62"
 };
 
-const fbApp = initializeApp(firebaseConfig);
-const db = getDatabase(fbApp);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-function fbSet(path, data){ return set(ref(db, path), data); }
-function fbRemove(path){ return remove(ref(db, path)); }
-function fbUpdate(path, data){ return update(ref(db, path), data); }
+function fbSet(path, data){ return db.ref(path).set(data); }
+function fbRemove(path){ return db.ref(path).remove(); }
+function fbUpdate(path, data){ return db.ref(path).update(data); }
 
 // ═══════════════════════════════════════════
 //  GRADES
@@ -501,11 +500,9 @@ function showLoading(on){
 function initFirebase(){
   showLoading(true);
 
-  // cats 구독
-  onValue(ref(db,'cats'), snap => {
+  db.ref('cats').on('value', snap => {
     const val = snap.val();
     if(val){
-      // Firebase 객체 → 배열 변환
       DB.cats = Object.values(val).map(cat => ({
         ...cat,
         subs: cat.subs ? Object.values(cat.subs).map(sub => ({
@@ -514,7 +511,6 @@ function initFirebase(){
         })) : []
       }));
     } else {
-      // 첫 실행 시 기본 데이터 저장
       DB.cats = DEFAULT_CATS;
       saveCatsToFB();
     }
@@ -522,20 +518,16 @@ function initFirebase(){
     showLoading(false);
   });
 
-  // items 구독
-  onValue(ref(db,'items'), snap => {
+  db.ref('items').on('value', snap => {
     const val = snap.val();
     DB.items = val ? Object.values(val) : [];
     renderAll();
     updateDmgChip();
   });
 
-  // grades 구독
-  onValue(ref(db,'grades'), snap => {
+  db.ref('grades').on('value', snap => {
     const val = snap.val();
-    if(val) {
-      GRADES = Object.values(val);
-    }
+    if(val) GRADES = Object.values(val);
   });
 }
 
@@ -1156,20 +1148,6 @@ function renderAll(){renderSidebar();renderDash();updateDmgChip();}
 ['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
 document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConf();});
 document.getElementById('cPar').addEventListener('change',()=>{if(document.getElementById('cType').value==='leaf')onCPar();});
-
-// ── window에 전역 함수 등록 (onclick에서 접근하기 위해 필수) ──
-Object.assign(window, {
-  toggleDmgFilter, openSettings, doSearch, goHome,
-  openAddModal, openAddCatModal, openAddMajorCat,
-  saveDetail, saveItem, saveCat, saveGradeNames, addGradeRow, rmGrade,
-  onFCat, onFSub, onCType, onCPar,
-  selectCat, selectSub, openDetail, editFullItem,
-  adjDetGrade, prevDetImg, refreshDetImg,
-  askDel, askDelSub, doConf, closeConf,
-  closeMW, openMW,
-  buildGradeInputs, renderGS, openSettings,
-  prevMImg,
-});
 
 // Firebase 연결 시작
 initFirebase();
