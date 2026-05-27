@@ -367,6 +367,13 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       <div class="hist-filter-chip all active" id="hfAll">전체</div>
       <div class="hist-filter-chip in" id="hfIn">📥 입고</div>
       <div class="hist-filter-chip out" id="hfOut">📤 출고</div>
+      <div style="width:1px;height:20px;background:var(--border2);margin:0 4px"></div>
+      <select class="fs" id="hfCat" style="height:30px;padding:0 10px;font-size:12px;width:auto;min-width:110px">
+        <option value="">전체 분류</option>
+      </select>
+      <select class="fs" id="hfSub" style="height:30px;padding:0 10px;font-size:12px;width:auto;min-width:110px;display:none">
+        <option value="">전체 중분류</option>
+      </select>
     </div>
     <div class="hist-srch">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
@@ -554,7 +561,7 @@ let DB={cats:[],items:[],history:[]};
 let selCatId=null,selSubId=null,detItemId=null,editModalId=null;
 let searchQ='',dmgFilter=false,curView='dash',confCb=null,detDriveVal=null;
 let curTab='inventory'; // 'inventory' | 'history'
-let histFilter='all',histSearchQ='',histItemFilter=null;
+let histFilter='all',histSearchQ='',histItemFilter=null,histCatFilter='',histSubFilter='';
 
 // ═══════════════════════════════════
 //  HELPERS
@@ -1076,6 +1083,12 @@ function switchTab(tab){
   document.getElementById('appInventory').classList.toggle('hidden',tab!=='inventory');
   document.getElementById('appHistory').classList.toggle('hidden',tab!=='history');
   document.getElementById('breadcrumb').style.display=tab==='inventory'?'flex':'none';
+  if(tab==='history'){
+    // 대분류 select 채우기
+    const catSel=document.getElementById('hfCat');
+    catSel.innerHTML='<option value="">전체 분류</option>';
+    DB.cats.forEach(c=>catSel.add(new Option(c.icon+' '+c.name,c.id)));
+  }
 }
 
 // ═══════════════════════════════════
@@ -1085,6 +1098,19 @@ function renderHistory(){
   let records=DB.history||[];
   if(histFilter!=='all') records=records.filter(r=>r.type===histFilter);
   if(histItemFilter) records=records.filter(r=>r.itemId===histItemFilter);
+  // 분류 필터
+  if(histCatFilter){
+    records=records.filter(r=>{
+      const item=DB.items.find(i=>i.id===r.itemId);
+      return item?.cId===histCatFilter;
+    });
+  }
+  if(histSubFilter){
+    records=records.filter(r=>{
+      const item=DB.items.find(i=>i.id===r.itemId);
+      return item?.sId===histSubFilter;
+    });
+  }
   if(histSearchQ) records=records.filter(r=>{
     const item=DB.items.find(i=>i.id===r.itemId);
     return (item?.name||'').toLowerCase().includes(histSearchQ)
@@ -1122,25 +1148,27 @@ function histRow(r){
   const isIn=r.type==='in';
   const sign=isIn?'+':'-';
   const cls=['gS','gA','gB','gC','gD'].includes(grade?.cls||'')?grade?.cls:'';
-  // 사진 썸네일
   const imgSrc=item?getImgSrc(item.driveUrl):null;
-  const thumbHtml=imgSrc
-    ?`<img src="${imgSrc}" alt="">`
-    :`<span>${item?catIcon(item.cId):'📦'}</span>`;
-  // 현재 총수량 계산
+  const thumbHtml=imgSrc?`<img src="${imgSrc}" alt="">`:`<span>${item?catIcon(item.cId):'📦'}</span>`;
   const nowTotal=item?itemTotal(item):'-';
+  // 전체 등급별 수량 배지
+  const gradeBadges=item?GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
+    const c=['gS','gA','gB','gC'].includes(g.cls)?g.cls:'';
+    return `<span class="gb ${c}" style="font-size:10px;padding:3px 6px">${g.name.split('(')[0].trim()} ${item[g.key]}</span>`;
+  }).join(''):'';
+  const dmgBadge=item&&(item.D||0)>0?`<span class="gb gD" style="font-size:10px;padding:3px 6px">⚠ 파손 ${item.D}</span>`:'';
   return `<div class="hist-row hist-${isIn?'in':'out'}">
     <div class="hist-thumb">${thumbHtml}</div>
     <div class="hist-info">
       <div class="hist-item-name">${item?.name||'(삭제된 물품)'}</div>
       <div class="hist-reason">${r.reason||'—'}</div>
-      <div class="hist-meta">
-        ${grade?`<span class="hist-grade-badge gb ${cls}">${grade.name}</span>`:''}
+      <div class="hist-meta" style="margin-bottom:5px">
+        ${grade?`<span class="hist-grade-badge gb ${cls}" style="font-size:11px">${grade.name} ${isIn?'+':'-'}${r.qty}</span>`:`<span style="font-size:11px;color:var(--text3)">${isIn?'+':'-'}${r.qty}개</span>`}
         ${r.place?`<div class="hist-meta-item"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${r.place}</div>`:''}
         ${r.person?`<div class="hist-meta-item"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="4" r="2.5"/><path d="M1 11c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>${r.person}</div>`:''}
-        <div class="hist-meta-item" style="margin-left:auto;font-size:11px;color:var(--text3)">${t.getMonth()+1}/${t.getDate()} ${timeStr}</div>
-        ${r.memo?`<div class="hist-meta-item">${r.memo}</div>`:''}
+        <div class="hist-meta-item" style="margin-left:auto;color:var(--text3)">${t.getMonth()+1}/${t.getDate()} ${timeStr}</div>
       </div>
+      ${item?`<div style="display:flex;gap:4px;flex-wrap:wrap">${gradeBadges}${dmgBadge}</div>`:''}
     </div>
     <div class="hist-qty-block">
       <div class="hist-qty-change ${isIn?'in':'out'}">${sign}${r.qty}</div>
@@ -1401,6 +1429,25 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('hfIn').addEventListener('click',()=>{histFilter='in';document.getElementById('hfIn').classList.add('active');document.getElementById('hfAll').classList.remove('active');document.getElementById('hfOut').classList.remove('active');renderHistory();});
   document.getElementById('hfOut').addEventListener('click',()=>{histFilter='out';document.getElementById('hfOut').classList.add('active');document.getElementById('hfAll').classList.remove('active');document.getElementById('hfIn').classList.remove('active');renderHistory();});
   document.getElementById('histSrchInput').addEventListener('input',e=>{histSearchQ=e.target.value.trim().toLowerCase();renderHistory();});
+  // 분류 필터
+  document.getElementById('hfCat').addEventListener('change',e=>{
+    histCatFilter=e.target.value;
+    histSubFilter='';
+    const subSel=document.getElementById('hfSub');
+    subSel.innerHTML='<option value="">전체 중분류</option>';
+    if(histCatFilter){
+      const cat=DB.cats.find(c=>c.id===histCatFilter);
+      cat?.subs.forEach(s=>subSel.add(new Option(s.name,s.id)));
+      subSel.style.display='';
+    } else {
+      subSel.style.display='none';
+    }
+    renderHistory();
+  });
+  document.getElementById('hfSub').addEventListener('change',e=>{
+    histSubFilter=e.target.value;
+    renderHistory();
+  });
   // confirm
   document.getElementById('btnCancelConf').addEventListener('click',()=>{document.getElementById('confW').classList.remove('open');confCb=null;});
   document.getElementById('btnDoConf').addEventListener('click',()=>{if(confCb)confCb();document.getElementById('confW').classList.remove('open');confCb=null;});
