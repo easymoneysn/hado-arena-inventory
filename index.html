@@ -234,6 +234,16 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .drive-hint{font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5}
 .det-save-bar{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border2);flex-shrink:0}
 .det-save-bar .btn{flex:1;justify-content:center}
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;flex-direction:column;gap:14px}
+.lightbox.open{opacity:1;pointer-events:all}
+.lightbox-img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:10px;box-shadow:0 24px 80px rgba(0,0,0,.6);transform:scale(.96);transition:transform .22s}
+.lightbox.open .lightbox-img{transform:scale(1)}
+.lightbox-name{font-size:14px;font-weight:600;color:rgba(255,255,255,.8)}
+.lightbox-close{position:absolute;top:20px;right:24px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .14s}
+.lightbox-close:hover{background:rgba(255,255,255,.18)}
+/* 이미지에 확대 커서 */
+.zoomable{cursor:zoom-in}
 /* MODALS */
 .mw{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .2s}
 .mw.open{opacity:1;pointer-events:all}
@@ -496,6 +506,13 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img class="lightbox-img" id="lbImg" src="" alt="">
+  <div class="lightbox-name" id="lbName"></div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
@@ -590,6 +607,17 @@ function getImgSrc(url){
 // 하위 호환용
 function driveThumb(url){return getImgSrc(url);}
 function itemTotal(item){return GRADES.filter(g=>g.key!=='D').reduce((s,g)=>s+(item[g.key]||0),0);}
+
+// ── 라이트박스 ──
+function openLightbox(src, name){
+  const lb=document.getElementById('lightbox');
+  document.getElementById('lbImg').src=src;
+  document.getElementById('lbName').textContent=name||'';
+  lb.classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+}
 let tT;
 function toast(msg,ok=true){
   const el=document.getElementById('toast');
@@ -776,6 +804,13 @@ function renderDash(){
   scroll.querySelectorAll('.dash-row').forEach(row=>{
     row.addEventListener('click',()=>openDetail(row.dataset.id));
   });
+  // 썸네일 클릭 → 라이트박스 (행 클릭 전에 처리)
+  scroll.querySelectorAll('.zoomable').forEach(img=>{
+    img.addEventListener('click',e=>{
+      e.stopPropagation();
+      openLightbox(img.dataset.src, img.dataset.name);
+    });
+  });
 }
 
 function dashRow(item){
@@ -785,7 +820,7 @@ function dashRow(item){
   const stLbl={ok:'정상',warn:'주의',dmg:'파손있음'}[st];
   const imgSrc = getImgSrc(item.driveUrl);
   const thumbHtml = imgSrc
-    ? `<img src="${imgSrc}" alt="">`
+    ? `<img src="${imgSrc}" alt="" class="zoomable" data-src="${imgSrc}" data-name="${item.name}">`
     : `<span style="font-size:22px">${catIcon(item.cId)}</span>`;
   const grades=GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
     const cls=['gS','gA','gB','gC'].includes(g.cls)?g.cls:'';
@@ -823,7 +858,7 @@ function openDetail(id){
 function renderDetail(item){
   const thumb=getImgSrc(item.driveUrl);
   const imgHtml=thumb
-    ?`<img src="${thumb}" alt="">`
+    ?`<img src="${thumb}" alt="" style="cursor:zoom-in" onclick="openLightbox('${thumb}','${item.name}')">`
     :`<span style="font-size:32px">${catIcon(item.cId)}</span>`;
   document.getElementById('detHead').innerHTML=`
     <div class="det-img">${imgHtml}</div>
@@ -873,7 +908,7 @@ function renderDetail(item){
     </div>
     <div class="det-sec">
       <div class="det-sec-t">사진</div>
-      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="" style="width:100%;max-height:220px;object-fit:contain;border-radius:8px">`:'<div class="iz-lbl">클릭하여 사진 업로드 또는 아래에 링크/Base64 입력</div>'}</div>
+      <div class="det-img-zone" id="dImgZone">${thumb?`<img src="${thumb}" alt="" style="width:100%;max-height:220px;object-fit:contain;border-radius:8px;cursor:zoom-in" onclick="openLightbox('${thumb}','${item.name}')">`:'<div class="iz-lbl">클릭하여 사진 업로드 또는 아래에 링크/Base64 입력</div>'}</div>
       <div class="drive-row">
         <input class="det-input" id="dDrive" value="${item.driveUrl||''}" placeholder="Base64 코드 또는 구글 드라이브 링크 붙여넣기">
         ${openDriveBtn}
@@ -1149,7 +1184,9 @@ function histRow(r){
   const sign=isIn?'+':'-';
   const cls=['gS','gA','gB','gC','gD'].includes(grade?.cls||'')?grade?.cls:'';
   const imgSrc=item?getImgSrc(item.driveUrl):null;
-  const thumbHtml=imgSrc?`<img src="${imgSrc}" alt="">`:`<span>${item?catIcon(item.cId):'📦'}</span>`;
+  const thumbHtml=imgSrc
+    ?`<img src="${imgSrc}" alt="" style="cursor:zoom-in;width:100%;height:100%;object-fit:contain;border-radius:9px" onclick="event.stopPropagation();openLightbox('${imgSrc}','${(item?.name||'').replace(/'/g,"\\'")}'">`
+    :`<span>${item?catIcon(item.cId):'📦'}</span>`;
   const nowTotal=item?itemTotal(item):'-';
   // 전체 등급별 수량 배지
   const gradeBadges=item?GRADES.filter(g=>g.key!=='D'&&(item[g.key]||0)>0).map(g=>{
@@ -1454,6 +1491,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   // overlay close
   ['itemMW','catMW','settingsMW','histMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
   document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('confW').classList.remove('open');confCb=null;}});
+
+  // ESC 키로 라이트박스 닫기
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') closeLightbox();
+  });
 
   // Firebase 시작
   initFirebase();
