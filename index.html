@@ -23,9 +23,59 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .hdr{height:56px;background:var(--bg2);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;padding:0 1.5rem;position:relative;z-index:100;flex-shrink:0}
 .hdr-badge{background:var(--accent);color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.07em;padding:4px 10px;border-radius:6px;flex-shrink:0}
 .hdr-title{font-size:15px;font-weight:700;letter-spacing:-.02em}
+/* 탭 */
+.hdr-tabs{display:flex;gap:2px;margin-left:16px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:3px}
+.hdr-tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .14s;user-select:none;display:flex;align-items:center;gap:5px}
+.hdr-tab:hover{color:var(--text)}
+.hdr-tab.active{background:var(--bg5);color:var(--text)}
+.hdr-tab svg{width:12px;height:12px}
 .breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);margin-left:4px}
 .bc-sep{opacity:.4}.bc-cur{color:var(--text);font-weight:600}
 .hdr-sp{flex:1}.hdr-actions{display:flex;align-items:center;gap:8px}
+/* 입출고 히스토리 */
+.hist-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.hist-toolbar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border2);background:var(--bg2);flex-shrink:0;flex-wrap:wrap}
+.hist-filter-row{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.hist-filter-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .13s;user-select:none}
+.hist-filter-chip:hover{background:var(--bg4)}
+.hist-filter-chip.active{color:#fff;border-color:transparent}
+.hist-filter-chip.in.active{background:#2a6644}
+.hist-filter-chip.out.active{background:#6e2222}
+.hist-filter-chip.all.active{background:var(--bg5);color:var(--text)}
+.hist-srch{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:0 10px;height:32px}
+.hist-srch svg{color:var(--text3);width:13px;height:13px;flex-shrink:0}
+.hist-srch input{background:none;border:none;outline:none;font-size:12px;color:var(--text);font-family:inherit;width:160px}
+.hist-srch input::placeholder{color:var(--text3)}
+.hist-scroll{flex:1;overflow-y:auto;padding:16px 20px}
+.hist-section{margin-bottom:24px}
+.hist-date-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.hist-row{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;margin-bottom:6px;transition:background .13s}
+.hist-row:hover{background:var(--bg3)}
+.hist-type{width:52px;height:52px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:2px}
+.hist-type.in{background:rgba(46,196,126,.12);border:1px solid rgba(46,196,126,.25)}
+.hist-type.out{background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.25)}
+.hist-type-label{font-size:10px;font-weight:700}
+.hist-type.in .hist-type-label{color:var(--green)}
+.hist-type.out .hist-type-label{color:var(--red)}
+.hist-type-qty{font-family:'Space Mono',monospace;font-size:16px;font-weight:700}
+.hist-type.in .hist-type-qty{color:var(--green)}
+.hist-type.out .hist-type-qty{color:var(--red)}
+.hist-info{flex:1;min-width:0}
+.hist-item-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.hist-reason{font-size:12px;color:var(--text2);margin-bottom:3px}
+.hist-meta{display:flex;gap:10px;flex-wrap:wrap}
+.hist-meta-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)}
+.hist-meta-item svg{width:10px;height:10px}
+.hist-grade-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px}
+.hist-del-btn{width:28px;height:28px;border-radius:6px;border:1px solid rgba(224,80,80,.2);background:none;color:rgba(224,80,80,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .12s;flex-shrink:0}
+.hist-del-btn:hover{background:rgba(224,80,80,.12);color:var(--red)}
+.hist-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;gap:10px;color:var(--text3);font-size:13px}
+/* 입출고 모달 */
+.io-type-row{display:flex;gap:8px;margin-bottom:12px}
+.io-type-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .14s;text-align:center}
+.io-type-btn:hover{background:var(--bg4)}
+.io-type-btn.active-in{background:rgba(46,196,126,.15);border-color:rgba(46,196,126,.4);color:var(--green)}
+.io-type-btn.active-out{background:rgba(224,80,80,.15);border-color:rgba(224,80,80,.4);color:var(--red)}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .14s;border:1px solid var(--border2);background:var(--bg3);color:var(--text);white-space:nowrap}
 .btn:hover{background:var(--bg4);border-color:var(--border3)}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -217,6 +267,16 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 <header class="hdr">
   <span class="hdr-badge">HADO</span>
   <span class="hdr-title">아레나 장비 재고 관리</span>
+  <div class="hdr-tabs">
+    <div class="hdr-tab active" id="tabInventory">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="1" width="12" height="12" rx="2"/><line x1="4" y1="5" x2="10" y2="5"/><line x1="4" y1="7.5" x2="10" y2="7.5"/><line x1="4" y1="10" x2="7" y2="10"/></svg>
+      재고 관리
+    </div>
+    <div class="hdr-tab" id="tabHistory">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="6"/><polyline points="7,4 7,7 9.5,9"/></svg>
+      입출고 기록
+    </div>
+  </div>
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="hdr-sp"></div>
   <div class="hdr-actions">
@@ -231,7 +291,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 </header>
 
 <!-- APP -->
-<div class="app">
+<div class="app" id="appInventory">
   <aside class="sidebar">
     <div class="sb-head">
       <div class="sb-lbl">분류</div>
@@ -262,6 +322,54 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
         <button class="btn" id="btnGoHome">← 목록으로</button>
         <button class="btn pri" id="btnSaveDet">변경 저장</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY TAB -->
+<div class="app hidden" id="appHistory" style="flex-direction:column">
+  <div class="hist-toolbar">
+    <div class="hist-filter-row">
+      <div class="hist-filter-chip all active" id="hfAll">전체</div>
+      <div class="hist-filter-chip in" id="hfIn">📥 입고</div>
+      <div class="hist-filter-chip out" id="hfOut">📤 출고</div>
+    </div>
+    <div class="hist-srch">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+      <input type="text" placeholder="물품명, 사유, 장소 검색..." id="histSrchInput">
+    </div>
+    <button class="btn pri sm" id="btnAddHistory">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+      기록 추가
+    </button>
+  </div>
+  <div class="hist-scroll" id="histScroll"></div>
+</div>
+
+<!-- ADD HISTORY MODAL -->
+<div class="mw" id="histMW">
+  <div class="modal" style="max-width:460px">
+    <div class="m-hdr"><div class="m-title" id="histMWTitle">입출고 기록 추가</div><button class="mc" id="btnCloseHistMW">×</button></div>
+    <div class="fg"><div class="fl">유형</div>
+      <div class="io-type-row">
+        <button class="io-type-btn active-in" id="ioBtnIn">📥 입고</button>
+        <button class="io-type-btn" id="ioBtnOut">📤 출고</button>
+      </div>
+    </div>
+    <input type="hidden" id="hType" value="in">
+    <div class="fg"><div class="fl">물품 *</div><select class="fs" id="hItem"><option value="">물품 선택</option></select></div>
+    <div class="fg"><div class="fl">등급</div><select class="fs" id="hGrade"></select></div>
+    <div class="fg2">
+      <div class="fg"><div class="fl">수량 *</div><input class="fi" type="number" id="hQty" placeholder="0" min="1" value="1"></div>
+      <div class="fg"><div class="fl">날짜 *</div><input class="fi" type="date" id="hDate"></div>
+    </div>
+    <div class="fg"><div class="fl">사유 *</div><input class="fi" id="hReason" placeholder="예: 행사 대여, 구매 입고, 분실 등"></div>
+    <div class="fg"><div class="fl">장소</div><input class="fi" id="hPlace" placeholder="예: 강남구 HADO 아레나, 창고"></div>
+    <div class="fg"><div class="fl">담당자</div><input class="fi" id="hPerson" placeholder="예: 홍길동"></div>
+    <div class="fg"><div class="fl">메모</div><input class="fi" id="hMemo" placeholder="추가 메모"></div>
+    <div class="m-foot">
+      <button class="btn" id="btnCancelHist">취소</button>
+      <button class="btn pri" id="btnSaveHist">저장</button>
     </div>
   </div>
 </div>
@@ -386,13 +494,15 @@ const DEFAULT_CATS=[
     {id:'s10',name:'공구 / 기타',leaves:[]},
   ]},
 ];
-let DB={cats:[],items:[]};
+let DB={cats:[],items:[],history:[]};
 
 // ═══════════════════════════════════
 //  STATE
 // ═══════════════════════════════════
 let selCatId=null,selSubId=null,detItemId=null,editModalId=null;
 let searchQ='',dmgFilter=false,curView='dash',confCb=null,detDriveVal=null;
+let curTab='inventory'; // 'inventory' | 'history'
+let histFilter='all',histSearchQ='',histItemFilter=null;
 
 // ═══════════════════════════════════
 //  HELPERS
@@ -479,6 +589,10 @@ function initFirebase(){
   });
   DB_REF.ref('grades').on('value',snap=>{
     if(snap.val())GRADES=Object.values(snap.val());
+  });
+  DB_REF.ref('history').on('value',snap=>{
+    DB.history=snap.val()?Object.values(snap.val()).sort((a,b)=>b.ts-a.ts):[];
+    renderHistory();
   });
 }
 
@@ -665,9 +779,14 @@ function renderDetail(item){
       </div>
     </div>
     <div class="det-actions">
+      <button class="btn sm" id="btnAddIO">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="5"/><polyline points="6,3 6,6 8.5,8"/></svg>
+        입출고 기록
+      </button>
       <button class="btn sm" id="btnEditFull">전체 편집</button>
       <button class="btn sm" id="btnDelItem" style="color:var(--red);border-color:rgba(224,80,80,.3)">삭제</button>
     </div>`;
+  document.getElementById('btnAddIO')?.addEventListener('click',()=>{switchTab('history');openAddHistoryModal(item.id);});
   document.getElementById('btnEditFull')?.addEventListener('click',()=>editFullItem(item.id));
   document.getElementById('btnDelItem')?.addEventListener('click',()=>askDel(item.id));
   const gradeRows=GRADES.map(g=>{
@@ -894,6 +1013,136 @@ function saveGradeNames(){
   saveGradesToFB();closeMW('settingsMW');renderAll();toast('등급 설정 저장됨 ✓');
 }
 
+
+// ═══════════════════════════════════
+//  TAB SWITCH
+// ═══════════════════════════════════
+function switchTab(tab){
+  curTab=tab;
+  document.getElementById('tabInventory').classList.toggle('active',tab==='inventory');
+  document.getElementById('tabHistory').classList.toggle('active',tab==='history');
+  document.getElementById('appInventory').classList.toggle('hidden',tab!=='inventory');
+  document.getElementById('appHistory').classList.toggle('hidden',tab!=='history');
+  document.getElementById('breadcrumb').style.display=tab==='inventory'?'':'none';
+}
+
+// ═══════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════
+function renderHistory(){
+  let records=DB.history||[];
+  if(histFilter!=='all') records=records.filter(r=>r.type===histFilter);
+  if(histItemFilter) records=records.filter(r=>r.itemId===histItemFilter);
+  if(histSearchQ) records=records.filter(r=>{
+    const item=DB.items.find(i=>i.id===r.itemId);
+    return (item?.name||'').toLowerCase().includes(histSearchQ)
+      ||(r.reason||'').toLowerCase().includes(histSearchQ)
+      ||(r.place||'').toLowerCase().includes(histSearchQ)
+      ||(r.person||'').toLowerCase().includes(histSearchQ);
+  });
+  const scroll=document.getElementById('histScroll');
+  if(!scroll) return;
+  if(!records.length){
+    scroll.innerHTML='<div class="hist-empty"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" style="opacity:.2"><circle cx="20" cy="20" r="18"/><polyline points="20,12 20,20 26,24"/></svg><span>기록이 없습니다</span></div>';
+    return;
+  }
+  const groups={};
+  records.forEach(r=>{
+    const d=new Date(r.ts);
+    const key=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    if(!groups[key])groups[key]=[];
+    groups[key].push(r);
+  });
+  scroll.innerHTML=Object.entries(groups).map(([date,recs])=>`
+    <div class="hist-section">
+      <div class="hist-date-hdr">${date}</div>
+      ${recs.map(r=>histRow(r)).join('')}
+    </div>`).join('');
+  scroll.querySelectorAll('.hist-del-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();askDelHistory(btn.dataset.id);});
+  });
+}
+function histRow(r){
+  const item=DB.items.find(i=>i.id===r.itemId);
+  const grade=GRADES.find(g=>g.key===r.grade);
+  const t=new Date(r.ts);
+  const timeStr=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  const isIn=r.type==='in';
+  const sign=isIn?'+':'-';
+  const cls=['gS','gA','gB','gC','gD'].includes(grade?.cls||'')?grade?.cls:'';
+  return `<div class="hist-row">
+    <div class="hist-type ${isIn?'in':'out'}">
+      <div class="hist-type-label">${isIn?'입고':'출고'}</div>
+      <div class="hist-type-qty">${sign}${r.qty}</div>
+    </div>
+    <div class="hist-info">
+      <div class="hist-item-name">${item?.name||'(삭제된 물품)'}</div>
+      <div class="hist-reason">${r.reason||'—'}</div>
+      <div class="hist-meta">
+        ${grade?`<span class="hist-grade-badge gb ${cls}">${grade.name}</span>`:''}
+        ${r.place?`<div class="hist-meta-item"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${r.place}</div>`:''}
+        ${r.person?`<div class="hist-meta-item"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="4" r="2.5"/><path d="M1 11c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>${r.person}</div>`:''}
+        <div class="hist-meta-item" style="margin-left:auto">${timeStr}</div>
+        ${r.memo?`<div class="hist-meta-item">${r.memo}</div>`:''}
+      </div>
+    </div>
+    <button class="hist-del-btn" data-id="${r.id}">×</button>
+  </div>`;
+}
+function openAddHistoryModal(prefItemId){
+  document.getElementById('hType').value='in';
+  document.getElementById('ioBtnIn').className='io-type-btn active-in';
+  document.getElementById('ioBtnOut').className='io-type-btn';
+  const sel=document.getElementById('hItem');
+  sel.innerHTML='<option value="">물품 선택</option>';
+  DB.items.forEach(i=>{
+    const cat=DB.cats.find(c=>c.id===i.cId);
+    sel.add(new Option(`[${cat?.name||''}] ${i.name}`,i.id));
+  });
+  if(prefItemId) sel.value=prefItemId;
+  const gSel=document.getElementById('hGrade');
+  gSel.innerHTML='<option value="">등급 (선택사항)</option>';
+  GRADES.forEach(g=>gSel.add(new Option(g.name,g.key)));
+  const today=new Date();
+  document.getElementById('hDate').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  ['hReason','hPlace','hPerson','hMemo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('hQty').value='1';
+  openMW('histMW');
+}
+function saveHistory(){
+  const itemId=document.getElementById('hItem').value;
+  const qty=+document.getElementById('hQty').value;
+  const dateVal=document.getElementById('hDate').value;
+  const reason=document.getElementById('hReason').value.trim();
+  if(!itemId||!qty||!dateVal||!reason){toast('물품, 수량, 날짜, 사유는 필수입니다',false);return;}
+  const [y,m,d]=dateVal.split('-').map(Number);
+  const now=new Date();
+  const ts=new Date(y,m-1,d,now.getHours(),now.getMinutes(),now.getSeconds()).getTime();
+  const record={
+    id:'h_'+Date.now(),ts,
+    type:document.getElementById('hType').value,
+    itemId,
+    grade:document.getElementById('hGrade').value||null,
+    qty,reason,
+    place:document.getElementById('hPlace').value.trim(),
+    person:document.getElementById('hPerson').value.trim(),
+    memo:document.getElementById('hMemo').value.trim(),
+  };
+  DB_REF.ref('history/'+record.id).set(record);
+  closeMW('histMW');toast('기록이 저장되었습니다 ✓');
+}
+function askDelHistory(id){
+  document.getElementById('confT').textContent='기록 삭제';
+  document.getElementById('confD').textContent='이 입출고 기록을 삭제하시겠습니까?';
+  confCb=()=>{DB_REF.ref('history/'+id).remove();toast('삭제되었습니다');};
+  document.getElementById('confW').classList.add('open');
+}
+
+// ═══════════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════════
+function renderAll(){renderSidebar();renderDash();updateDmgChip();}
+
 // DELETE
 function askDel(id){
   const item=DB.items.find(i=>i.id===id);
@@ -922,6 +1171,9 @@ function askDelSub(catId,subId){
 //  INIT — DOM 완성 후 실행
 // ═══════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
+  // 탭 전환
+  document.getElementById('tabInventory').addEventListener('click',()=>switchTab('inventory'));
+  document.getElementById('tabHistory').addEventListener('click',()=>switchTab('history'));
   // 버튼 이벤트
   document.getElementById('btnSettings').addEventListener('click',openSettings);
   document.getElementById('dmgChip').addEventListener('click',toggleDmgFilter);
@@ -946,11 +1198,30 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btnCancelSettings').addEventListener('click',()=>closeMW('settingsMW'));
   document.getElementById('btnSaveGrades').addEventListener('click',saveGradeNames);
   document.getElementById('btnAddGrade').addEventListener('click',addGradeRow);
+  // history
+  document.getElementById('btnAddHistory').addEventListener('click',()=>openAddHistoryModal(null));
+  document.getElementById('btnCloseHistMW').addEventListener('click',()=>closeMW('histMW'));
+  document.getElementById('btnCancelHist').addEventListener('click',()=>closeMW('histMW'));
+  document.getElementById('btnSaveHist').addEventListener('click',saveHistory);
+  document.getElementById('ioBtnIn').addEventListener('click',()=>{
+    document.getElementById('hType').value='in';
+    document.getElementById('ioBtnIn').className='io-type-btn active-in';
+    document.getElementById('ioBtnOut').className='io-type-btn';
+  });
+  document.getElementById('ioBtnOut').addEventListener('click',()=>{
+    document.getElementById('hType').value='out';
+    document.getElementById('ioBtnOut').className='io-type-btn active-out';
+    document.getElementById('ioBtnIn').className='io-type-btn';
+  });
+  document.getElementById('hfAll').addEventListener('click',()=>{histFilter='all';document.getElementById('hfAll').classList.add('active');document.getElementById('hfIn').classList.remove('active');document.getElementById('hfOut').classList.remove('active');renderHistory();});
+  document.getElementById('hfIn').addEventListener('click',()=>{histFilter='in';document.getElementById('hfIn').classList.add('active');document.getElementById('hfAll').classList.remove('active');document.getElementById('hfOut').classList.remove('active');renderHistory();});
+  document.getElementById('hfOut').addEventListener('click',()=>{histFilter='out';document.getElementById('hfOut').classList.add('active');document.getElementById('hfAll').classList.remove('active');document.getElementById('hfIn').classList.remove('active');renderHistory();});
+  document.getElementById('histSrchInput').addEventListener('input',e=>{histSearchQ=e.target.value.trim().toLowerCase();renderHistory();});
   // confirm
   document.getElementById('btnCancelConf').addEventListener('click',()=>{document.getElementById('confW').classList.remove('open');confCb=null;});
   document.getElementById('btnDoConf').addEventListener('click',()=>{if(confCb)confCb();document.getElementById('confW').classList.remove('open');confCb=null;});
   // overlay close
-  ['itemMW','catMW','settingsMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
+  ['itemMW','catMW','settingsMW','histMW'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeMW(id);});});
   document.getElementById('confW').addEventListener('click',e=>{if(e.target===e.currentTarget){document.getElementById('confW').classList.remove('open');confCb=null;}});
 
   // Firebase 시작
