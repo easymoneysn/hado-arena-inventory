@@ -49,20 +49,23 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .hist-scroll{flex:1;overflow-y:auto;padding:16px 20px}
 .hist-section{margin-bottom:24px}
 .hist-date-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.hist-row{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;margin-bottom:6px;transition:background .13s}
+.hist-row{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:13px 16px;margin-bottom:6px;transition:background .13s;position:relative;overflow:hidden}
 .hist-row:hover{background:var(--bg3)}
-.hist-type{width:52px;height:52px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:2px}
-.hist-type.in{background:rgba(46,196,126,.12);border:1px solid rgba(46,196,126,.25)}
-.hist-type.out{background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.25)}
-.hist-type-label{font-size:10px;font-weight:700}
-.hist-type.in .hist-type-label{color:var(--green)}
-.hist-type.out .hist-type-label{color:var(--red)}
-.hist-type-qty{font-family:'Space Mono',monospace;font-size:16px;font-weight:700}
-.hist-type.in .hist-type-qty{color:var(--green)}
-.hist-type.out .hist-type-qty{color:var(--red)}
+.hist-row.hist-in{border-left:3px solid rgba(46,196,126,.6)}
+.hist-row.hist-out{border-left:3px solid rgba(224,80,80,.6)}
+/* 사진 썸네일 */
+.hist-thumb{width:56px;height:56px;border-radius:9px;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
+.hist-thumb img{width:100%;height:100%;object-fit:contain;border-radius:9px}
+/* 수량 변화 블록 */
+.hist-qty-block{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:72px;padding:0 8px;border-left:1px solid var(--border2)}
+.hist-qty-change{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;line-height:1}
+.hist-qty-change.in{color:var(--green)}
+.hist-qty-change.out{color:var(--red)}
+.hist-qty-now{font-family:'Space Mono',monospace;font-size:11px;color:var(--text3);margin-top:4px}
+.hist-qty-now span{color:var(--text2);font-weight:700}
 .hist-info{flex:1;min-width:0}
 .hist-item-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
-.hist-reason{font-size:12px;color:var(--text2);margin-bottom:3px}
+.hist-reason{font-size:12px;color:var(--text2);margin-bottom:4px}
 .hist-meta{display:flex;gap:10px;flex-wrap:wrap}
 .hist-meta-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3)}
 .hist-meta-item svg{width:10px;height:10px}
@@ -76,6 +79,36 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .io-type-btn:hover{background:var(--bg4)}
 .io-type-btn.active-in{background:rgba(46,196,126,.15);border-color:rgba(46,196,126,.4);color:var(--green)}
 .io-type-btn.active-out{background:rgba(224,80,80,.15);border-color:rgba(224,80,80,.4);color:var(--red)}
+/* 물품 선택 커스텀 드롭다운 */
+.item-picker{position:relative}
+.ip-selected{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;cursor:pointer;transition:border-color .14s;display:flex;align-items:center;gap:8px;min-height:40px}
+.ip-selected:hover,.item-picker.open .ip-selected{border-color:var(--accent)}
+.ip-placeholder{font-size:13px;color:var(--text3)}
+.ip-sel-thumb{width:26px;height:26px;border-radius:5px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden}
+.ip-sel-thumb img{width:100%;height:100%;object-fit:contain;border-radius:5px}
+.ip-sel-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.ip-sel-cat{font-size:11px;color:var(--text3)}
+.ip-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;z-index:400;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden}
+.ip-search-row{padding:10px 10px 6px}
+.ip-search{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:8px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .14s}
+.ip-search:focus{border-color:var(--accent)}
+.ip-search::placeholder{color:var(--text3)}
+.ip-cat-tabs{display:flex;gap:4px;padding:0 10px 8px;overflow-x:auto;flex-wrap:nowrap}
+.ip-cat-tabs::-webkit-scrollbar{height:3px}
+.ip-cat-tab{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);transition:all .12s;white-space:nowrap;flex-shrink:0}
+.ip-cat-tab:hover{background:var(--bg4);color:var(--text2)}
+.ip-cat-tab.active{background:var(--bg5);color:var(--text);border-color:var(--border3)}
+.ip-list{max-height:220px;overflow-y:auto;padding:0 6px 6px}
+.ip-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .12s}
+.ip-item:hover{background:var(--bg3)}
+.ip-item.selected{background:var(--bg4)}
+.ip-item-thumb{width:32px;height:32px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden;border:1px solid var(--border)}
+.ip-item-thumb img{width:100%;height:100%;object-fit:contain;border-radius:6px}
+.ip-item-info{flex:1;min-width:0}
+.ip-item-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-item-sub{font-size:11px;color:var(--text3)}
+.ip-item-total{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0}
+.ip-empty{padding:20px;text-align:center;font-size:12px;color:var(--text3)}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .14s;border:1px solid var(--border2);background:var(--bg3);color:var(--text);white-space:nowrap}
 .btn:hover{background:var(--bg4);border-color:var(--border3)}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -349,7 +382,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 
 <!-- ADD HISTORY MODAL -->
 <div class="mw" id="histMW">
-  <div class="modal" style="max-width:460px">
+  <div class="modal" style="max-width:480px">
     <div class="m-hdr"><div class="m-title" id="histMWTitle">입출고 기록 추가</div><button class="mc" id="btnCloseHistMW">×</button></div>
     <div class="fg"><div class="fl">유형</div>
       <div class="io-type-row">
@@ -358,8 +391,26 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       </div>
     </div>
     <input type="hidden" id="hType" value="in">
-    <div class="fg"><div class="fl">물품 *</div><select class="fs" id="hItem"><option value="">물품 선택</option></select></div>
-    <div class="fg"><div class="fl">등급</div><select class="fs" id="hGrade"></select></div>
+    <input type="hidden" id="hItem" value="">
+
+    <!-- 물품 선택 커스텀 드롭다운 -->
+    <div class="fg">
+      <div class="fl">물품 *</div>
+      <div class="item-picker" id="itemPicker">
+        <div class="ip-selected" id="ipSelected">
+          <span class="ip-placeholder">물품을 선택하세요</span>
+        </div>
+        <div class="ip-dropdown" id="ipDropdown" style="display:none">
+          <div class="ip-search-row">
+            <input class="ip-search" id="ipSearch" placeholder="물품명 검색...">
+          </div>
+          <div class="ip-cat-tabs" id="ipCatTabs"></div>
+          <div class="ip-list" id="ipList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fg"><div class="fl">등급 <span style="font-weight:400;color:var(--text3)">(미선택 시 A급에 반영)</span></div><select class="fs" id="hGrade"></select></div>
     <div class="fg2">
       <div class="fg"><div class="fl">수량 *</div><input class="fi" type="number" id="hQty" placeholder="0" min="1" value="1"></div>
       <div class="fg"><div class="fl">날짜 *</div><input class="fi" type="date" id="hDate"></div>
@@ -1071,11 +1122,15 @@ function histRow(r){
   const isIn=r.type==='in';
   const sign=isIn?'+':'-';
   const cls=['gS','gA','gB','gC','gD'].includes(grade?.cls||'')?grade?.cls:'';
-  return `<div class="hist-row">
-    <div class="hist-type ${isIn?'in':'out'}">
-      <div class="hist-type-label">${isIn?'입고':'출고'}</div>
-      <div class="hist-type-qty">${sign}${r.qty}</div>
-    </div>
+  // 사진 썸네일
+  const imgSrc=item?getImgSrc(item.driveUrl):null;
+  const thumbHtml=imgSrc
+    ?`<img src="${imgSrc}" alt="">`
+    :`<span>${item?catIcon(item.cId):'📦'}</span>`;
+  // 현재 총수량 계산
+  const nowTotal=item?itemTotal(item):'-';
+  return `<div class="hist-row hist-${isIn?'in':'out'}">
+    <div class="hist-thumb">${thumbHtml}</div>
     <div class="hist-info">
       <div class="hist-item-name">${item?.name||'(삭제된 물품)'}</div>
       <div class="hist-reason">${r.reason||'—'}</div>
@@ -1083,27 +1138,139 @@ function histRow(r){
         ${grade?`<span class="hist-grade-badge gb ${cls}">${grade.name}</span>`:''}
         ${r.place?`<div class="hist-meta-item"><svg viewBox="0 0 10 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12s4-4.5 4-7A4 4 0 101 5c0 2.5 4 7 4 7z"/><circle cx="5" cy="5" r="1.2"/></svg>${r.place}</div>`:''}
         ${r.person?`<div class="hist-meta-item"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="4" r="2.5"/><path d="M1 11c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>${r.person}</div>`:''}
-        <div class="hist-meta-item" style="margin-left:auto">${timeStr}</div>
+        <div class="hist-meta-item" style="margin-left:auto;font-size:11px;color:var(--text3)">${t.getMonth()+1}/${t.getDate()} ${timeStr}</div>
         ${r.memo?`<div class="hist-meta-item">${r.memo}</div>`:''}
       </div>
+    </div>
+    <div class="hist-qty-block">
+      <div class="hist-qty-change ${isIn?'in':'out'}">${sign}${r.qty}</div>
+      <div class="hist-qty-now">현재 <span>${nowTotal}</span>개</div>
     </div>
     <button class="hist-del-btn" data-id="${r.id}">×</button>
   </div>`;
 }
+// ── 물품 선택 커스텀 드롭다운 ──
+let ipSelCat='all', ipSearchQ='', ipSelectedId=null;
+
+function initItemPicker(prefItemId){
+  ipSelCat='all'; ipSearchQ=''; ipSelectedId=prefItemId||null;
+  renderIpCatTabs();
+  renderIpList();
+  // 선택된 물품 표시
+  if(prefItemId){
+    const item=DB.items.find(i=>i.id===prefItemId);
+    if(item) setIpSelected(item);
+  } else {
+    document.getElementById('ipSelected').innerHTML='<span class="ip-placeholder">물품을 선택하세요</span>';
+    document.getElementById('hItem').value='';
+  }
+  // 클릭으로 드롭다운 열기/닫기
+  const sel=document.getElementById('ipSelected');
+  sel.onclick=()=>toggleIpDropdown();
+  // 검색
+  document.getElementById('ipSearch').oninput=e=>{
+    ipSearchQ=e.target.value.toLowerCase();
+    renderIpList();
+  };
+  // 외부 클릭 시 닫기
+  setTimeout(()=>{
+    document.addEventListener('click',closeIpOnOutside);
+  },0);
+}
+function closeIpOnOutside(e){
+  const picker=document.getElementById('itemPicker');
+  if(picker&&!picker.contains(e.target)){
+    closeIpDropdown();
+    document.removeEventListener('click',closeIpOnOutside);
+  }
+}
+function toggleIpDropdown(){
+  const dd=document.getElementById('ipDropdown');
+  const picker=document.getElementById('itemPicker');
+  if(dd.style.display==='none'){
+    dd.style.display='block';
+    picker.classList.add('open');
+    setTimeout(()=>document.getElementById('ipSearch')?.focus(),50);
+  } else {
+    closeIpDropdown();
+  }
+}
+function closeIpDropdown(){
+  const dd=document.getElementById('ipDropdown');
+  const picker=document.getElementById('itemPicker');
+  if(dd) dd.style.display='none';
+  if(picker) picker.classList.remove('open');
+}
+function renderIpCatTabs(){
+  const tabs=document.getElementById('ipCatTabs');
+  if(!tabs) return;
+  tabs.innerHTML=`<div class="ip-cat-tab${ipSelCat==='all'?' active':''}" data-cat="all">전체</div>`
+    +DB.cats.map(c=>`<div class="ip-cat-tab${ipSelCat===c.id?' active':''}" data-cat="${c.id}">${c.icon} ${c.name}</div>`).join('');
+  tabs.querySelectorAll('.ip-cat-tab').forEach(tab=>{
+    tab.addEventListener('click',e=>{
+      e.stopPropagation();
+      ipSelCat=tab.dataset.cat;
+      renderIpCatTabs();
+      renderIpList();
+    });
+  });
+}
+function renderIpList(){
+  const list=document.getElementById('ipList');
+  if(!list) return;
+  let items=DB.items;
+  if(ipSelCat!=='all') items=items.filter(i=>i.cId===ipSelCat);
+  if(ipSearchQ) items=items.filter(i=>i.name.toLowerCase().includes(ipSearchQ));
+  if(!items.length){list.innerHTML='<div class="ip-empty">물품이 없습니다</div>';return;}
+  list.innerHTML=items.map(item=>{
+    const cat=DB.cats.find(c=>c.id===item.cId);
+    const sub=cat?.subs.find(s=>s.id===item.sId);
+    const imgSrc=getImgSrc(item.driveUrl);
+    const thumbHtml=imgSrc?`<img src="${imgSrc}" alt="">`:`<span>${catIcon(item.cId)}</span>`;
+    const tot=itemTotal(item);
+    return `<div class="ip-item${ipSelectedId===item.id?' selected':''}" data-id="${item.id}">
+      <div class="ip-item-thumb">${thumbHtml}</div>
+      <div class="ip-item-info">
+        <div class="ip-item-name">${item.name}</div>
+        <div class="ip-item-sub">${cat?.name||''}${sub?' › '+sub.name:''}</div>
+      </div>
+      <div class="ip-item-total">${tot}개</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.ip-item').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      const item=DB.items.find(i=>i.id===el.dataset.id);
+      if(!item) return;
+      ipSelectedId=item.id;
+      document.getElementById('hItem').value=item.id;
+      setIpSelected(item);
+      closeIpDropdown();
+      document.removeEventListener('click',closeIpOnOutside);
+    });
+  });
+}
+function setIpSelected(item){
+  const imgSrc=getImgSrc(item.driveUrl);
+  const thumbHtml=imgSrc?`<img src="${imgSrc}" alt="">`:`<span>${catIcon(item.cId)}</span>`;
+  const cat=DB.cats.find(c=>c.id===item.cId);
+  document.getElementById('ipSelected').innerHTML=`
+    <div class="ip-sel-thumb">${thumbHtml}</div>
+    <div class="ip-sel-name">${item.name}</div>
+    <div class="ip-sel-cat">${cat?.icon||''} ${cat?.name||''}</div>`;
+}
+
 function openAddHistoryModal(prefItemId){
   document.getElementById('hType').value='in';
   document.getElementById('ioBtnIn').className='io-type-btn active-in';
   document.getElementById('ioBtnOut').className='io-type-btn';
-  const sel=document.getElementById('hItem');
-  sel.innerHTML='<option value="">물품 선택</option>';
-  DB.items.forEach(i=>{
-    const cat=DB.cats.find(c=>c.id===i.cId);
-    sel.add(new Option(`[${cat?.name||''}] ${i.name}`,i.id));
-  });
-  if(prefItemId) sel.value=prefItemId;
+  // 커스텀 드롭다운 초기화
+  initItemPicker(prefItemId);
+  // 등급
   const gSel=document.getElementById('hGrade');
   gSel.innerHTML='<option value="">등급 (선택사항)</option>';
   GRADES.forEach(g=>gSel.add(new Option(g.name,g.key)));
+  // 오늘 날짜
   const today=new Date();
   document.getElementById('hDate').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   ['hReason','hPlace','hPerson','hMemo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1115,22 +1282,38 @@ function saveHistory(){
   const qty=+document.getElementById('hQty').value;
   const dateVal=document.getElementById('hDate').value;
   const reason=document.getElementById('hReason').value.trim();
+  const gradeKey=document.getElementById('hGrade').value||null;
+  const type=document.getElementById('hType').value;
   if(!itemId||!qty||!dateVal||!reason){toast('물품, 수량, 날짜, 사유는 필수입니다',false);return;}
+
+  // ── 수량 자동 반영 ──
+  const item=DB.items.find(i=>i.id===itemId);
+  if(item){
+    // 등급 선택 시 해당 등급, 없으면 A급(기본)에 반영
+    const targetKey = gradeKey || 'A';
+    const cur = item[targetKey]||0;
+    if(type==='in'){
+      item[targetKey] = cur + qty;
+    } else {
+      if(cur < qty){toast(`${GRADES.find(g=>g.key===targetKey)?.name||targetKey} 현재 수량(${cur})보다 출고량이 많습니다`,false);return;}
+      item[targetKey] = cur - qty;
+    }
+    saveItemToFB(item);
+  }
+
   const [y,m,d]=dateVal.split('-').map(Number);
   const now=new Date();
   const ts=new Date(y,m-1,d,now.getHours(),now.getMinutes(),now.getSeconds()).getTime();
   const record={
-    id:'h_'+Date.now(),ts,
-    type:document.getElementById('hType').value,
-    itemId,
-    grade:document.getElementById('hGrade').value||null,
-    qty,reason,
+    id:'h_'+Date.now(),ts,type,itemId,
+    grade:gradeKey,qty,reason,
     place:document.getElementById('hPlace').value.trim(),
     person:document.getElementById('hPerson').value.trim(),
     memo:document.getElementById('hMemo').value.trim(),
   };
   DB_REF.ref('history/'+record.id).set(record);
-  closeMW('histMW');toast('기록이 저장되었습니다 ✓');
+  closeMW('histMW');
+  toast(`${type==='in'?'입고':'출고'} 기록 저장 & 수량 반영 ✓`);
 }
 function askDelHistory(id){
   document.getElementById('confT').textContent='기록 삭제';
